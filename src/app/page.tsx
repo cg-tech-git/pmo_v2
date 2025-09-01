@@ -1455,20 +1455,23 @@ export default function HomePage() {
     };
 
     const downloadReport = async (reportItem: ReportItem) => {
-        if (!reportItem.generationParams) {
-            setToastMessage('Cannot download: Report generation data not available');
-            setToastType('error');
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
-            return;
-        }
-
         try {
             setToastMessage('Regenerating and downloading report...');
             setToastType('info');
             setShowToast(true);
 
-            const { generationParams } = reportItem;
+            // Handle reports with missing generationParams
+            let generationParams = reportItem.generationParams;
+            if (!generationParams) {
+                // Create minimal params from available data
+                generationParams = {
+                    customerName: reportItem.name.split('_')[0] || 'Unknown',
+                    reportDate: new Date().toISOString(),
+                    selectedEmployees: [],
+                    selectedCategories: {},
+                    reportFormat: ''
+                };
+            }
             
             // Determine the format - handle both old and new format
             let reportFormats;
