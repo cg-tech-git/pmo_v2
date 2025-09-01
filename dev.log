@@ -832,3 +832,6 @@ Employee data received: {
 [33m[auth][warn][debug-enabled][0m Read more: https://warnings.authjs.dev
  GET /api/auth/session 200 in 1004ms
  GET /api/auth/session 200 in 21ms
+ ✓ Compiled middleware in 11ms
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled in 2ms

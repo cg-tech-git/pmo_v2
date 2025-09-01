@@ -6,9 +6,6 @@ import type { NextAuthConfig } from "next-auth"
 const ALLOWED_DOMAINS = ["allaith.com", "cg-tech.co", "thevirtulab.com"]
 
 export const config = {
-  theme: {
-    logo: "/logo.png",
-  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -60,7 +57,7 @@ export const config = {
   session: {
     strategy: "jwt",
   },
-  debug: true, // Temporarily enable debug for production
+  debug: false,
 } satisfies NextAuthConfig
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config)
