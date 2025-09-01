@@ -72,10 +72,13 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session) {
+      console.error('POST /api/reports - Unauthorized: No session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
+    console.log('POST /api/reports - Request body:', JSON.stringify(body, null, 2));
+    
     const {
       reportName,
       fileType,
@@ -110,14 +113,20 @@ export async function POST(request: NextRequest) {
       .table(tableId)
       .insert([row]);
     
+    console.log('POST /api/reports - Successfully saved report:', row.id);
+    
     return NextResponse.json({ 
       success: true, 
       data: { id: row.id } 
     });
   } catch (error) {
-    console.error('Error saving report:', error);
+    console.error('POST /api/reports - Error saving report:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: 'Failed to save report' },
+      { error: 'Failed to save report: ' + (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }
     );
   }

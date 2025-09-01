@@ -1287,6 +1287,7 @@ export default function HomePage() {
                         await generateReport(result.data, reportFormats);
                         
                         // Save report metadata to database for each format
+                        let saveError = false;
                         for (const format of selectedFormats) {
                             const fileType = format.id === 'export-pdf' ? 'PDF' : 
                                            format.id === 'export-xlsx' ? 'Excel' : 'ZIP';
@@ -1297,41 +1298,59 @@ export default function HomePage() {
                                 fileType.toLowerCase()
                             );
                             
-                            await fetch('/api/reports', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    reportName,
-                                    fileType,
-                                    fileSize: '0 MB', // Size calculation would need to be implemented
-                                    customerName: customerName || 'Unknown',
-                                    reportDate: selectedDate ? selectedDate.toString() : new Date().toISOString(),
-                                    employeeCount: selectedEmployees.length,
-                                    generationParams: {
-                                        selectedCategories: selectedCategoriesForAPI,
-                                        formats: selectedFormats.map(f => f.id),
+                            try {
+                                const saveResponse = await fetch('/api/reports', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
                                     },
-                                }),
-                            });
+                                    body: JSON.stringify({
+                                        reportName,
+                                        fileType,
+                                        fileSize: '0 MB', // Size calculation would need to be implemented
+                                        customerName: customerName || 'Unknown',
+                                        reportDate: selectedDate ? selectedDate.toString() : new Date().toISOString(),
+                                        employeeCount: selectedEmployees.length,
+                                        generationParams: {
+                                            selectedCategories: selectedCategoriesForAPI,
+                                            formats: selectedFormats.map(f => f.id),
+                                        },
+                                    }),
+                                });
+                                
+                                if (!saveResponse.ok) {
+                                    console.error('Failed to save report metadata:', await saveResponse.text());
+                                    saveError = true;
+                                }
+                            } catch (error) {
+                                console.error('Error saving report metadata:', error);
+                                saveError = true;
+                            }
                         }
                         
                         // Refresh reports from database to show the new ones
                         const updatedReports = await fetchReports();
                         setReportHistory(updatedReports);
                         
-                        // Show success toast message
+                        // Show appropriate toast message
                         const formatCount = selectedFormats.length;
                         const formatNames = selectedFormats.map(f => {
                             if (f.id === 'export-pdf') return 'PDF';
                             if (f.id === 'export-xlsx') return 'Excel';
                             return 'ZIP';
                         }).join(', ');
-                        setToastMessage(`${formatCount} file${formatCount > 1 ? 's' : ''} downloaded (${formatNames})`);
-                        setToastType('success');
+                        
+                        if (saveError) {
+                            // Report downloaded but failed to save to history
+                            setToastMessage(`${formatCount} file${formatCount > 1 ? 's' : ''} downloaded (${formatNames}) but failed to save to history`);
+                            setToastType('warning');
+                        } else {
+                            // Both download and save succeeded
+                            setToastMessage(`${formatCount} file${formatCount > 1 ? 's' : ''} downloaded (${formatNames})`);
+                            setToastType('success');
+                        }
                         setShowToast(true);
-                        setTimeout(() => setShowToast(false), 3000);
+                        setTimeout(() => setShowToast(false), 5000);
                         
                         setTimeout(() => {
                             setConfirmedSteps(new Set());
