@@ -6,7 +6,7 @@ import { DatePicker } from "@/components/application/date-picker/date-picker";
 import { Progress } from "@/components/application/progress-steps/progress-steps";
 import type { ProgressFeaturedIconType } from "@/components/application/progress-steps/progress-types";
 import { type DateValue, getLocalTimeZone, CalendarDate } from "@internationalized/date";
-import { Header } from "@/components/marketing/header-navigation/components/header";
+import { AppHeader } from "@/components/application/app-header";
 import { DialogTrigger as AriaDialogTrigger, Heading as AriaHeading } from "react-aria-components";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Button } from "@/components/base/buttons/button";
@@ -24,25 +24,16 @@ import { Badge } from "@/components/base/badges/badges";
 import { Tag, TagGroup, TagList } from "@/components/base/tags/tags";
 import { PaginationButtonGroup } from "@/components/application/pagination/pagination";
 
-export const HeaderDropdownSimple = ({ showToast, toastMessage, toastType }: { 
-    showToast?: boolean; 
-    toastMessage?: string; 
-    toastType?: 'success' | 'error' | 'info'
-}) => (
-    <Header
-        items={[]}
-        showToast={showToast}
-        toastMessage={toastMessage}
-        toastType={toastType}
-    />
-);
 
-// Employee data types
+
+// Employee data types - matching BigQuery Employee_List view structure
 interface Employee {
-    id: string;
-    name: string;
-    department: string;
-    certificate: string;
+    employee_code: string;  // EmployeeCode from Employee_List
+    employee_name: string;  // EmployeeName from Employee_List
+    employee_id?: number;   // lEmpId from Employee_Details (optional)
+    department?: string;    // Department from Employee_Details (optional)
+    job_title?: string;     // Designation from Employee_Details (optional)
+    branch?: string;        // BranchName from Employee_Details (optional)
 }
 
 // Report history interface
@@ -53,6 +44,14 @@ interface ReportItem {
     uploadedAt: string;
     updatedAt: string;
     uploadedBy: string;
+    // Store generation parameters for re-downloading
+    generationParams?: {
+        customerName: string;
+        reportDate: string;
+        selectedEmployees: Employee[];
+        selectedCategories: any;
+        reportFormat: string;
+    };
 }
 
 // Load reports from localStorage or initialize empty
@@ -63,30 +62,6 @@ const getStoredReports = (): ReportItem[] => {
     }
     return [];
 };
-
-// Sample employee data (in real app, this would come from API)
-const allEmployees: Employee[] = [
-    { id: '0001', name: 'John Smith', department: 'Engineering', certificate: 'PMP' },
-    { id: '0002', name: 'Sarah Wilson', department: 'Sales', certificate: 'CSM' },
-    { id: '0003', name: 'Mike Brown', department: 'Operations', certificate: 'Six Sigma' },
-    { id: '0004', name: 'Lisa Johnson', department: 'HR', certificate: 'SHRM-CP' },
-    { id: '0005', name: 'David Lee', department: 'Engineering', certificate: 'AWS Certified' },
-    { id: '0006', name: 'Emma Davis', department: 'Sales', certificate: 'HubSpot' },
-    { id: '0007', name: 'James Wilson', department: 'Operations', certificate: 'ITIL' },
-    { id: '0008', name: 'Anna Taylor', department: 'Marketing', certificate: 'Google Ads' },
-    { id: '0009', name: 'Robert Martin', department: 'Engineering', certificate: 'CCNA' },
-    { id: '0010', name: 'Mary Garcia', department: 'Finance', certificate: 'CPA' },
-    { id: '0011', name: 'Christopher Brown', department: 'IT', certificate: 'CompTIA Security+' },
-    { id: '0012', name: 'Jennifer White', department: 'Marketing', certificate: 'HubSpot Inbound' },
-    { id: '0013', name: 'Thomas Anderson', department: 'Engineering', certificate: 'Azure Solutions' },
-    { id: '0014', name: 'Patricia Miller', department: 'HR', certificate: 'PHR' },
-    { id: '0015', name: 'Daniel Rodriguez', department: 'Finance', certificate: 'CFA Level II' },
-    { id: '0016', name: 'Michelle Thompson', department: 'Sales', certificate: 'Salesforce Admin' },
-    { id: '0017', name: 'Kevin Martinez', department: 'Operations', certificate: 'Lean Six Sigma' },
-    { id: '0018', name: 'Sandra Clark', department: 'IT', certificate: 'CISSP' },
-    { id: '0019', name: 'Brian Hall', department: 'Engineering', certificate: 'Google Cloud Pro' },
-    { id: '0020', name: 'Linda Lewis', department: 'Marketing', certificate: 'Facebook Blueprint' },
-];
 
 // Modal data structure
 const modalData = {
@@ -100,50 +75,45 @@ const modalData = {
         { id: 'place-of-birth', label: 'Place Of Birth', selected: false },
         { id: 'nationality', label: 'Nationality', selected: false },
         { id: 'gender', label: 'Gender', selected: false },
-        { id: 'language', label: 'Language', selected: false },
-        { id: 'photo', label: 'Photo', selected: false },
-    ],
-    passportInfo: [
-        { id: 'passport-no', label: 'Passport No', selected: false },
-        { id: 'passport-issue-country', label: 'Passport Issue Country', selected: false },
-        { id: 'passport-issue-date', label: 'Passport Issue Date', selected: false },
-        { id: 'passport-expiry-date', label: 'Passport Expiry Date', selected: false },
-    ],
-    emiratesInfo: [
-        { id: 'visa-no', label: 'Visa No', selected: false },
-        { id: 'visa-issue-place', label: 'Visa Issue Place', selected: false },
-        { id: 'visa-start-date', label: 'Visa Start date', selected: false },
-        { id: 'visa-expiry-date', label: 'Visa Expiry date', selected: false },
-        { id: 'emirates-uid-no', label: 'Emirates UID No', selected: false },
-        { id: 'emirates-id-no', label: 'Emirates ID No', selected: false },
-        { id: 'emirates-id-issue-date', label: 'Emirates ID Issue Date', selected: false },
-        { id: 'emirates-id-expiry-date', label: 'Emirates ID Expiry Date', selected: false },
-        { id: 'mol-number', label: 'MOL Number', selected: false },
-        { id: 'mol-start-date', label: 'MOL Start date', selected: false },
-        { id: 'mol-expiry-date', label: 'MOL Expiry date', selected: false },
-    ],
-    certificateInfo: [
-        { id: 'certificate-type', label: 'Certificate Type', selected: false },
-        { id: 'certificate-no', label: 'Certificate No', selected: false },
-        { id: 'certificate-start-date', label: 'Certificate Start Date', selected: false },
-        { id: 'certificate-expiry-date', label: 'Certificate Expiry Date', selected: false },
+        { id: 'language', label: 'Language', selected: false }
     ],
     employmentInfo: [
-        { id: 'employee-id', label: 'Employee ID', selected: false },
         { id: 'job-title', label: 'Job Title', selected: false },
         { id: 'department', label: 'Department', selected: false },
         { id: 'date-of-joining', label: 'Date of Joining', selected: false },
         { id: 'contact-no', label: 'Contact No', selected: false },
         { id: 'residence-location', label: 'Residence Location', selected: false },
     ],
+    passportInfo: [
+        { id: 'passport-no', label: 'Passport Number', selected: false },
+        { id: 'passport-issue-country', label: 'Passport Issue Country', selected: false },
+        { id: 'passport-issue-date', label: 'Passport Issue Date', selected: false },
+        { id: 'passport-expiry-date', label: 'Passport Expiry Date', selected: false },
+    ],
+    visaInfo: [
+        { id: 'visa-no', label: 'Visa Number', selected: false },
+        { id: 'visa-issue-place', label: 'Visa Issue Place', selected: false },
+        { id: 'visa-issue-date', label: 'Visa Issue date', selected: false },
+        { id: 'visa-expiry-date', label: 'Visa Expiry date', selected: false },
+    ],
+    eidInfo: [
+        { id: 'emirates-id-no', label: 'Emirates ID Number', selected: false },
+        { id: 'emirates-id-issue-date', label: 'Emirates ID Issue Date', selected: false },
+        { id: 'emirates-id-expiry-date', label: 'Emirates ID Expiry Date', selected: false },
+    ],
+    molInfo: [
+        { id: 'mol-number', label: 'MOL Number', selected: false },
+        { id: 'mol-issue-date', label: 'MOL Issue Date', selected: false },
+        { id: 'mol-expiry-date', label: 'MOL Expiry Date', selected: false },
+    ],
     insuranceInfo: [
         { id: 'insurance-type', label: 'Insurance Type', selected: false },
-        { id: 'insurance-start-date', label: 'Insurance Start Date', selected: false },
+        { id: 'insurance-issue-date', label: 'Insurance Issue Date', selected: false },
         { id: 'insurance-expiry-date', label: 'Insurance Expiry Date', selected: false },
     ],
     createReport: [
-        { id: 'export-zip', label: 'Export as .zip', selected: false },
-        { id: 'export-pdf', label: 'Export as .pdf', selected: false },
+        { id: 'export-zip', label: 'Export as .zip', selected: false, disabled: true },
+        { id: 'export-pdf', label: 'Export as .pdf', selected: false, disabled: true },
         { id: 'export-xlsx', label: 'Export as .xlsx', selected: false },
     ],
 };
@@ -152,7 +122,7 @@ const ModalComponent = ({ isOpen, onClose, title, items, onToggle, onConfirm, co
     isOpen: boolean;
     onClose: () => void;
     title: string;
-    items: { id: string; label: string; selected: boolean }[];
+    items: { id: string; label: string; selected: boolean; disabled?: boolean }[];
     onToggle: (id: string) => void;
     onConfirm: () => void;
     confirmButtonText?: string;
@@ -185,11 +155,11 @@ const ModalComponent = ({ isOpen, onClose, title, items, onToggle, onConfirm, co
                                         <Toggle
                                             size="sm"
                                             label="Select all"
-                                            onChange={() => {
-                                                items.forEach((it) => {
-                                                    if (!it.selected) onToggle(it.id);
-                                                });
-                                            }}
+                                                                        onChange={() => {
+                                items.forEach((it) => {
+                                    if (!it.selected && !it.disabled) onToggle(it.id);
+                                });
+                            }}
                                         />
                                     </div>
                                 )}
@@ -204,6 +174,7 @@ const ModalComponent = ({ isOpen, onClose, title, items, onToggle, onConfirm, co
                                         size="sm" 
                                         label={item.label}
                                         defaultSelected={item.selected}
+                                        isDisabled={(item as any).disabled}
                                         onChange={() => onToggle(item.id)}
                                     />
                                 ))}
@@ -234,7 +205,8 @@ const EmployeeSearchModal = ({
     handleEmployeeSelect,
     removeEmployee,
     clearAllEmployees,
-    onClose
+    onClose,
+    isSearching
 }: {
     selectedEmployees: Employee[];
     searchTerm: string;
@@ -245,6 +217,7 @@ const EmployeeSearchModal = ({
     removeEmployee: (id: string) => void;
     clearAllEmployees: () => void;
     onClose: () => void;
+    isSearching: boolean;
 }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -288,17 +261,23 @@ const EmployeeSearchModal = ({
                         />
                         {searchResults.length > 0 && searchTerm.length >= 2 && (
                             <div className="absolute top-full mt-2 w-full bg-primary border border-gray-200 rounded-lg shadow-lg z-10 max-h-[36rem] overflow-y-auto">
-                                {searchResults.map((employee) => (
-                                    <button
-                                        key={employee.id}
-                                        onClick={() => handleEmployeeSelect(employee.id)}
-                                        className="w-full px-4 py-2 text-left hover:bg-transparent flex items-center"
-                                    >
-                                        <div>
-                                            <span className="font-medium">{employee.id}</span> - {employee.name}
-                                        </div>
-                                    </button>
-                                ))}
+                                {isSearching ? (
+                                    <div className="px-4 py-3 text-center text-sm text-tertiary">
+                                        Searching...
+                                    </div>
+                                ) : (
+                                    searchResults.map((employee) => (
+                                        <button
+                                            key={employee.employee_id || employee.employee_code}
+                                            onClick={() => handleEmployeeSelect(employee.employee_code)}
+                                            className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                                        >
+                                            <div className="text-sm text-primary">
+                                                {employee.employee_code} - {employee.employee_name}
+                                            </div>
+                                        </button>
+                                    ))
+                                )}
                             </div>
                         )}
                     </div>
@@ -319,12 +298,12 @@ const EmployeeSearchModal = ({
                                     </Table.Header>
                                     <Table.Body>
                                         {displayedEmployees.map((employee) => (
-                                            <Table.Row key={employee.id} className="h-8">
-                                                <Table.Cell className="text-xs font-medium py-0.5">{employee.id}</Table.Cell>
-                                                <Table.Cell className="text-xs py-0.5">{employee.name}</Table.Cell>
+                                            <Table.Row key={employee.employee_id || employee.employee_code} className="h-8">
+                                                <Table.Cell className="text-xs font-medium py-0.5">{employee.employee_code}</Table.Cell>
+                                                <Table.Cell className="text-xs py-0.5">{employee.employee_name}</Table.Cell>
                                                 <Table.Cell className="py-0.5">
                                                     <CloseButton 
-                                                        onClick={() => removeEmployee(employee.id)}
+                                                        onClick={() => removeEmployee(employee.employee_code)}
                                                         size="xs"
                                                         theme="light"
                                                     />
@@ -392,7 +371,7 @@ const InlineExpandedSection = ({
     onClose: () => void;
     confirmButtonText?: string;
 }) => {
-    const allSelected = items.every((it) => it.selected);
+    const allSelected = items.filter(it => !(it as any).disabled).every((it) => it.selected);
     return (
         <div className="relative w-full overflow-hidden rounded-2xl bg-primary shadow-xl border border-gray-200 transition-all sm:max-w-100">
             <CloseButton onClick={onClose} theme="light" size="lg" className="absolute top-3 right-3" />
@@ -414,7 +393,7 @@ const InlineExpandedSection = ({
             </div>
             <div className="h-5 w-full" />
             <div className="flex flex-col gap-3 px-4 sm:px-6">
-                {(["Personal Info", "Employment Info", "Passport Info", "Emirates Info", "Certificate Info", "Insurance Info"].includes(title)) && (
+                {(["Personal Info", "Employment Info", "Passport Info", "Visa Info", "EID Info", "MOL Info", "Insurance Info"].includes(title)) && (
                     <div className="mb-1">
                         <div className="flex items-start gap-3">
                             <Toggle
@@ -424,11 +403,11 @@ const InlineExpandedSection = ({
                                 onChange={(next) => {
                                     if (next) {
                                         items.forEach((it) => {
-                                            if (!it.selected) onToggle(it.id);
+                                            if (!it.selected && !(it as any).disabled) onToggle(it.id);
                                         });
                                     } else {
                                         items.forEach((it) => {
-                                            if (it.selected) onToggle(it.id);
+                                            if (it.selected && !(it as any).disabled) onToggle(it.id);
                                         });
                                     }
                                 }}
@@ -443,6 +422,7 @@ const InlineExpandedSection = ({
                     <div key={item.id} className="flex items-start gap-3">
                         <Toggle
                             isSelected={item.selected}
+                            isDisabled={(item as any).disabled}
                             onChange={() => onToggle(item.id)}
                             size="sm"
                         />
@@ -465,9 +445,10 @@ const InlineExpandedSection = ({
 };
 
 // Reports History Table Component
-const ReportsHistoryTable = ({ reportHistory, onDeleteReport, setToastMessage, setToastType, setShowToast }: { 
+const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, setToastMessage, setToastType, setShowToast }: { 
     reportHistory: ReportItem[]; 
     onDeleteReport: (reportName: string) => void;
+    onDownloadReport: (reportItem: ReportItem) => void;
     setToastMessage: (message: string) => void;
     setToastType: (type: 'success' | 'error' | 'info') => void;
     setShowToast: (show: boolean) => void;
@@ -545,7 +526,7 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, setToastMessage, s
                 <div className="py-12">
                     <EmptyState>
                         <EmptyState.Header>
-                            <EmptyState.FeaturedIcon icon={File01} />
+                            <EmptyState.FeaturedIcon icon={File01} color="brand" />
                         </EmptyState.Header>
                         <EmptyState.Content>
                             <EmptyState.Title>No reports yet</EmptyState.Title>
@@ -647,12 +628,7 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, setToastMessage, s
                                     <button
                                         aria-label="Download"
                                         className="p-1 rounded hover:bg-transparent focus:outline-none"
-                                        onClick={() => {
-                                            setToastMessage('Demo - file download');
-                                            setToastType('info');
-                                            setShowToast(true);
-                                            setTimeout(() => setShowToast(false), 3000);
-                                        }}
+                                        onClick={() => onDownloadReport(item)}
                                     >
                                         <Download01 className="size-5 text-tertiary" />
                                     </button>
@@ -701,7 +677,7 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, setToastMessage, s
     );
 };
 
-export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, selectedEmployees, removeEmployee, handleToggle, expandedStep, setExpandedStep, onConfirm, onCancel, onClear, searchTerm, setSearchTerm, searchResults, handleEmployeeSearch, handleEmployeeSelect, clearAllEmployees }: { 
+const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, selectedEmployees, removeEmployee, handleToggle, expandedStep, setExpandedStep, onConfirm, onCancel, onClear, searchTerm, setSearchTerm, searchResults, handleEmployeeSearch, handleEmployeeSelect, clearAllEmployees, isSearching }: { 
     onStepClick: (stepIndex: number) => void;
     confirmedSteps: Set<number>;
     items: typeof modalData;
@@ -719,6 +695,7 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
     handleEmployeeSearch: (value: string) => void;
     handleEmployeeSelect: (id: string) => void;
     clearAllEmployees: () => void;
+    isSearching: boolean;
 }) => {
     // Function to check if a category has any active toggles
     const hasActiveToggles = (stepIndex: number) => {
@@ -728,7 +705,7 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
         }
         
         // Adjust index for modal data (subtract 1 since Employee Selection doesn't have a modal)
-        const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'];
+        const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'];
         const modalKey = modalKeys[stepIndex - 1];
         const categoryItems = items[modalKey as keyof typeof items];
         return categoryItems.some(item => item.selected);
@@ -759,8 +736,9 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
         { title: "Personal Info", description: "", icon: User01 },
         { title: "Employment Info", description: "", icon: UsersPlus },
         { title: "Passport Info", description: "", icon: Flag05 },
-        { title: "Emirates Info", description: "", icon: Stars02 },
-        { title: "Certificate Info", description: "", icon: CheckCircle },
+        { title: "Visa Info", description: "", icon: Stars02 },
+        { title: "EID Info", description: "", icon: CheckCircle },
+        { title: "MOL Info", description: "", icon: Flag05 },
         { title: "Insurance Info", description: "", icon: UsersPlus },
         { title: "Create Report", description: "", icon: File01 },
     ];
@@ -770,8 +748,9 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
         { title: "Personal Info", description: "", icon: User01 },
         { title: "Employment Info", description: "", icon: UsersPlus },
         { title: "Passport Info", description: "", icon: Flag05 },
-        { title: "Emirates Info", description: "", icon: Stars02 },
-        { title: "Certificate Info", description: "", icon: CheckCircle },
+        { title: "Visa Info", description: "", icon: Stars02 },
+        { title: "EID Info", description: "", icon: CheckCircle },
+        { title: "MOL Info", description: "", icon: Flag05 },
         { title: "Insurance Info", description: "", icon: UsersPlus },
         { title: "Create Report", description: "", icon: File01 },
     ];
@@ -796,7 +775,7 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
             return count > 0 ? [`${count} employee${count > 1 ? 's' : ''} selected`] : [];
         }
         
-        const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'];
+        const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'];
         const modalKey = modalKeys[stepIndex - 1];
         const categoryItems = items[modalKey as keyof typeof items];
         const selectedCount = categoryItems.filter(item => item.selected).length;
@@ -809,7 +788,7 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
             <div className="max-md:hidden">
                 <div className="relative">
                     <Progress.IconsWithText items={steps} size="sm" orientation="horizontal" />
-                    <div className="absolute inset-0 grid grid-cols-8 gap-4">
+                    <div className="absolute inset-0 grid grid-cols-9 gap-4">
                         {steps.map((step, index) => (
                             <button
                                 key={index}
@@ -818,17 +797,14 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
                                 aria-label={`Click to edit ${step.title}`}
                             >
                                 <span className="sr-only">Edit {step.title}</span>
-                                {/* Hover tooltip */}
-                                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-gray-300 text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                                    Click to edit
-                                </span>
+
                             </button>
                         ))}
                     </div>
                 </div>
                 
                 {/* Tags below each category */}
-                <div className="grid grid-cols-8 gap-4 mt-4">
+                <div className="grid grid-cols-9 gap-4 mt-4">
                     {steps.map((step, index) => {
                         const selectedItems = getSelectedItems(index);
                         if (selectedItems.length === 0) return <div key={index} />;
@@ -875,20 +851,21 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
                                     removeEmployee={removeEmployee}
                                     clearAllEmployees={clearAllEmployees}
                                     onClose={() => setExpandedStep(null)}
+                                    isSearching={isSearching}
                                 />
                             ) : (
                                 <InlineExpandedSection
                                     stepIndex={expandedStep}
-                                    items={items[(['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'][expandedStep - 1]) as keyof typeof items]}
-                                    title={(['Personal Info', 'Employment Info', 'Passport Info', 'Emirates Info', 'Certificate Info', 'Insurance Info', 'Create Report'][expandedStep - 1])}
+                                    items={items[(['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'][expandedStep - 1]) as keyof typeof items]}
+                                    title={(['Personal Info', 'Employment Info', 'Passport Info', 'Visa Info', 'EID Info', 'MOL Info', 'Insurance Info', 'Create Report'][expandedStep - 1])}
                                     onToggle={(itemId) => {
-                                        const modalKey = ['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'][expandedStep - 1];
+                                        const modalKey = ['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'][expandedStep - 1];
                                         handleToggle(modalKey, itemId);
                                     }}
                                     onConfirm={onConfirm}
                                     onClear={onClear}
                                     onClose={() => setExpandedStep(null)}
-                                    confirmButtonText={expandedStep === 7 ? "Submit" : "Next"}
+                                    confirmButtonText={expandedStep === 8 ? "Submit" : "Next"}
                                 />
                             )}
                         </div>
@@ -909,10 +886,7 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
                                 aria-label={`Click to edit ${step.title}`}
                             >
                                 <span className="sr-only">Edit {step.title}</span>
-                                {/* Hover tooltip */}
-                                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-gray-300 text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                                    Click to edit
-                                </span>
+
                             </button>
                         ))}
                     </div>
@@ -967,20 +941,21 @@ export const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, sel
                                     removeEmployee={removeEmployee}
                                     clearAllEmployees={clearAllEmployees}
                                     onClose={() => setExpandedStep(null)}
+                                    isSearching={isSearching}
                                 />
                             ) : (
                                 <InlineExpandedSection
                                     stepIndex={expandedStep}
-                                    items={items[(['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'][expandedStep - 1]) as keyof typeof items]}
-                                    title={(['Personal Info', 'Employment Info', 'Passport Info', 'Emirates Info', 'Certificate Info', 'Insurance Info', 'Create Report'][expandedStep - 1])}
+                                    items={items[(['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'][expandedStep - 1]) as keyof typeof items]}
+                                    title={(['Personal Info', 'Employment Info', 'Passport Info', 'Visa Info', 'EID Info', 'MOL Info', 'Insurance Info', 'Create Report'][expandedStep - 1])}
                                     onToggle={(itemId) => {
-                                        const modalKey = ['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'][expandedStep - 1];
+                                        const modalKey = ['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'][expandedStep - 1];
                                         handleToggle(modalKey, itemId);
                                     }}
                                     onConfirm={onConfirm}
                                     onClear={onClear}
                                     onClose={() => setExpandedStep(null)}
-                                    confirmButtonText={expandedStep === 7 ? "Submit" : "Next"}
+                                    confirmButtonText={expandedStep === 8 ? "Submit" : "Next"}
                                 />
                             )}
                         </div>
@@ -1002,6 +977,7 @@ export default function HomePage() {
     const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<Employee[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
     
     // Toast state
     const [showToast, setShowToast] = useState(false);
@@ -1027,6 +1003,7 @@ export default function HomePage() {
     }, [reportHistory]);
 
     const handleStepClick = (stepIndex: number) => {
+        console.log('handleStepClick called with stepIndex:', stepIndex);
         // Toggle expanded state
         if (expandedStep === stepIndex) {
             setExpandedStep(null);
@@ -1041,18 +1018,18 @@ export default function HomePage() {
         setItems(prev => ({
             ...prev,
             [modalType]: prev[modalType as keyof typeof prev].map(item =>
-                item.id === itemId ? { ...item, selected: !item.selected } : item
+                item.id === itemId && !(item as any).disabled ? { ...item, selected: !item.selected } : item
             )
         }));
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         // Mark the current expanded step as confirmed
         if (expandedStep !== null) {
             setConfirmedSteps(prev => new Set(prev).add(expandedStep));
             
-            // If this is the final step (Create Report - index 7), show toast and reset the progress tracker
-            if (expandedStep === 7) {
+            // If this is the final step (Create Report - index 8), show toast and reset the progress tracker
+            if (expandedStep === 8) {
                 // Validate that at least one employee is selected
                 if (selectedEmployees.length === 0) {
                     setToastMessage('Please select at least one employee before submission');
@@ -1082,6 +1059,65 @@ export default function HomePage() {
                     setShowToast(true);
                     setTimeout(() => setShowToast(false), 3000);
                     return;
+                }
+                
+                // Prepare report formats
+                const reportFormats = {
+                    pdf: selectedFormats.some(f => f.id === 'export-pdf'),
+                    xlsx: selectedFormats.some(f => f.id === 'export-xlsx'),
+                    zip: selectedFormats.some(f => f.id === 'export-zip')
+                };
+                
+                // Prepare selected categories with active toggles
+                const selectedCategories: Record<string, string[]> = {};
+                
+                // Personal Info
+                if (items.personalInfo.some(item => item.selected)) {
+                    selectedCategories.personalInfo = items.personalInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
+                }
+                
+                // Employment Info
+                if (items.employmentInfo.some(item => item.selected)) {
+                    selectedCategories.employmentInfo = items.employmentInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
+                }
+                
+                // Passport Info
+                if (items.passportInfo.some(item => item.selected)) {
+                    selectedCategories.passportInfo = items.passportInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
+                }
+                
+                // Visa Info
+                if (items.visaInfo.some(item => item.selected)) {
+                    selectedCategories.visaInfo = items.visaInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
+                }
+                
+                // EID Info
+                if (items.eidInfo.some(item => item.selected)) {
+                    selectedCategories.eidInfo = items.eidInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
+                }
+                
+                // MOL Info
+                if (items.molInfo.some(item => item.selected)) {
+                    selectedCategories.molInfo = items.molInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
+                }
+                
+                // Insurance Info
+                if (items.insuranceInfo.some(item => item.selected)) {
+                    selectedCategories.insuranceInfo = items.insuranceInfo
+                        .filter(item => item.selected)
+                        .map(item => item.id);
                 }
                 
                 // Create new report entry
@@ -1125,33 +1161,83 @@ export default function HomePage() {
                         size: `${(Math.random() * 2 + 0.5).toFixed(1)} MB`,
                         uploadedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                         updatedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                        uploadedBy: "Current User"
+                        uploadedBy: "Current User",
+                        // Store generation parameters for re-downloading
+                        generationParams: {
+                            customerName: customerName.trim(),
+                            reportDate: dateStr,
+                            selectedEmployees: [...selectedEmployees],
+                            selectedCategories: JSON.parse(JSON.stringify(selectedCategories)),
+                            reportFormat: format.id
+                        }
                     };
                 });
                 
-                // Add new reports to the beginning of the list
-                setReportHistory([...newReports, ...reportHistory]);
-                
-                // Show success toast message
-                const formatCount = selectedFormats.length;
-                const formatNames = selectedFormats.map(f => {
-                    if (f.id === 'export-pdf') return 'PDF';
-                    if (f.id === 'export-xlsx') return 'Excel';
-                    return 'ZIP';
-                }).join(', ');
-                setToastMessage(`${formatCount} file${formatCount > 1 ? 's' : ''} will download (${formatNames})`);
-                setToastType('success');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000); // Hide toast after 3 seconds
-                
-                setTimeout(() => {
-                    setConfirmedSteps(new Set());
-                    // Reset all form data
-                    setItems(modalData);
-                    setSelectedEmployees([]);
-                    setCustomerName('');
-                    setSelectedDate(null);
-                }, 500); // Small delay to show completion before reset
+                // Call API to generate report
+                try {
+                    setToastMessage('Generating report...');
+                    setToastType('info');
+                    setShowToast(true);
+                    
+                    const response = await fetch('/api/generate-report', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            customerName: customerNameCleaned,
+                            reportDate: dateStr,
+                            selectedEmployees,
+                            selectedCategories,
+                            reportFormats
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Import report generator dynamically to avoid SSR issues
+                        const { generateReport } = await import('@/lib/report-generator');
+                        
+                        // Generate the report client-side
+                        await generateReport(result.data, reportFormats);
+                        
+                        // Add new reports to the beginning of the list
+                        setReportHistory([...newReports, ...reportHistory]);
+                        
+                        // Show success toast message
+                        const formatCount = selectedFormats.length;
+                        const formatNames = selectedFormats.map(f => {
+                            if (f.id === 'export-pdf') return 'PDF';
+                            if (f.id === 'export-xlsx') return 'Excel';
+                            return 'ZIP';
+                        }).join(', ');
+                        setToastMessage(`${formatCount} file${formatCount > 1 ? 's' : ''} downloaded (${formatNames})`);
+                        setToastType('success');
+                        setShowToast(true);
+                        setTimeout(() => setShowToast(false), 3000);
+                        
+                        setTimeout(() => {
+                            setConfirmedSteps(new Set());
+                            // Reset all form data
+                            setItems(modalData);
+                            setSelectedEmployees([]);
+                            setCustomerName('');
+                            setSelectedDate(null);
+                        }, 500);
+                    } else {
+                        setToastMessage('Error generating report: ' + result.error);
+                        setToastType('error');
+                        setShowToast(true);
+                        setTimeout(() => setShowToast(false), 5000);
+                    }
+                } catch (error) {
+                    console.error('Error calling report API:', error);
+                    setToastMessage('Failed to generate report. Please try again.');
+                    setToastType('error');
+                    setShowToast(true);
+                    setTimeout(() => setShowToast(false), 5000);
+                }
             }
         }
         setExpandedStep(null);
@@ -1160,7 +1246,7 @@ export default function HomePage() {
     const handleClear = () => {
         // Clear all toggles for the current modal without closing it
         if (expandedStep !== null && expandedStep !== 0) {
-            const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'];
+            const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'];
             const modalKey = modalKeys[expandedStep - 1];
             
             setItems(prev => ({
@@ -1176,7 +1262,7 @@ export default function HomePage() {
     const handleCancel = () => {
         // Clear all toggles for the current modal
         if (expandedStep !== null && expandedStep !== 0) {
-            const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'emiratesInfo', 'certificateInfo', 'insuranceInfo', 'createReport'];
+            const modalKeys = ['personalInfo', 'employmentInfo', 'passportInfo', 'visaInfo', 'eidInfo', 'molInfo', 'insuranceInfo', 'createReport'];
             const modalKey = modalKeys[expandedStep - 1];
             
             setItems(prev => ({
@@ -1197,20 +1283,33 @@ export default function HomePage() {
         personalInfo: 'Personal Info',
         employmentInfo: 'Employment Info',
         passportInfo: 'Passport Info',
-        emiratesInfo: 'Emirates Info',
-        certificateInfo: 'Certificate Info',
+        visaInfo: 'Visa Info',
+        eidInfo: 'EID Info',
+        molInfo: 'MOL Info',
         insuranceInfo: 'Insurance Info'
     };
 
     // Employee search functions
-    const handleEmployeeSearch = (value: string) => {
+    const handleEmployeeSearch = async (value: string) => {
         setSearchTerm(value);
         if (value.length >= 2) {
-            const filtered = allEmployees.filter(emp => 
-                emp.id.toLowerCase().includes(value.toLowerCase()) ||
-                emp.name.toLowerCase().includes(value.toLowerCase())
-            );
-            setSearchResults(filtered);
+            setIsSearching(true);
+            try {
+                const response = await fetch(`/api/employees?search=${encodeURIComponent(value)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    setSearchResults(data.data);
+                } else {
+                    console.error('Error searching employees:', data.error);
+                    setSearchResults([]);
+                }
+            } catch (error) {
+                console.error('Error fetching employees:', error);
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
         } else {
             setSearchResults([]);
         }
@@ -1218,8 +1317,8 @@ export default function HomePage() {
 
     const handleEmployeeSelect = (key: string | number | null) => {
         if (key) {
-            const employee = allEmployees.find(emp => emp.id === key);
-            if (employee && !selectedEmployees.find(e => e.id === employee.id)) {
+            const employee = searchResults.find(emp => emp.employee_code === key);
+            if (employee && !selectedEmployees.find(e => e.employee_code === employee.employee_code)) {
                 setSelectedEmployees([...selectedEmployees, employee]);
                 setSearchTerm('');
                 setSearchResults([]);
@@ -1227,8 +1326,8 @@ export default function HomePage() {
         }
     };
 
-    const removeEmployee = (employeeId: string) => {
-        setSelectedEmployees(selectedEmployees.filter(emp => emp.id !== employeeId));
+    const removeEmployee = (employeeCode: string) => {
+        setSelectedEmployees(selectedEmployees.filter(emp => emp.employee_code !== employeeCode));
     };
     
     const clearAllEmployees = () => {
@@ -1239,9 +1338,74 @@ export default function HomePage() {
         setReportHistory(reportHistory.filter(report => report.name !== reportName));
     };
 
+    const downloadReport = async (reportItem: ReportItem) => {
+        if (!reportItem.generationParams) {
+            setToastMessage('Cannot download: Report generation data not available');
+            setToastType('error');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+            return;
+        }
+
+        try {
+            setToastMessage('Regenerating and downloading report...');
+            setToastType('info');
+            setShowToast(true);
+
+            const { generationParams } = reportItem;
+            
+            // Call the API to get fresh data
+            const response = await fetch('/api/generate-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customerName: generationParams.customerName,
+                    reportDate: generationParams.reportDate,
+                    selectedEmployees: generationParams.selectedEmployees,
+                    selectedCategories: generationParams.selectedCategories,
+                    reportFormats: [generationParams.reportFormat]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate report data');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                // Import report generator dynamically
+                const { generateReport } = await import('@/lib/report-generator');
+                
+                // Determine the format
+                const reportFormats = {
+                    pdf: generationParams.reportFormat === 'export-pdf',
+                    xlsx: generationParams.reportFormat === 'export-xlsx',
+                    zip: generationParams.reportFormat === 'export-zip'
+                };
+                
+                // Generate and download the report
+                await generateReport(result.data, reportFormats);
+                
+                setToastMessage('Report downloaded successfully');
+                setToastType('success');
+            } else {
+                throw new Error(result.error || 'Failed to generate report');
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            setToastMessage('Failed to download report. Please try again.');
+            setToastType('error');
+        } finally {
+            setTimeout(() => setShowToast(false), 3000);
+        }
+    };
+
     return (
         <div>
-            <HeaderDropdownSimple 
+            <AppHeader 
                 showToast={showToast}
                 toastMessage={toastMessage}
                 toastType={toastType}
@@ -1295,10 +1459,7 @@ export default function HomePage() {
                                             strokeLinejoin="round"
                                         />
                                     </svg>
-                                    {/* Hover tooltip */}
-                                    <span className="absolute -bottom-8 right-0 text-gray-300 text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                                        Reset all selections
-                                    </span>
+
                                 </button>
                             </div>
                         }
@@ -1332,6 +1493,7 @@ export default function HomePage() {
                             handleEmployeeSearch={handleEmployeeSearch}
                             handleEmployeeSelect={handleEmployeeSelect}
                             clearAllEmployees={clearAllEmployees}
+                            isSearching={isSearching}
                         />
                     </div>
                 </TableCard.Root>
@@ -1341,6 +1503,7 @@ export default function HomePage() {
                 <ReportsHistoryTable 
                     reportHistory={reportHistory} 
                     onDeleteReport={deleteReport}
+                    onDownloadReport={downloadReport}
                     setToastMessage={setToastMessage}
                     setToastType={setToastType}
                     setShowToast={setShowToast}
