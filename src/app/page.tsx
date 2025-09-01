@@ -1239,8 +1239,8 @@ export default function HomePage() {
                                 fileType: fileTypeForDB,
                                 fileSize: fileSize,
                                 customerName: customerName.trim(),
-                                reportDate: new Date().toISOString(), // Use ISO format for date
-                                employeeCount: selectedEmployees.size,
+                                reportDate: jsDate.toISOString(), // Use ISO format for date
+                                employeeCount: selectedEmployees.length,
                                 generationParams: generationParams
                             })
                         });
@@ -1315,7 +1315,7 @@ export default function HomePage() {
                                         fileType,
                                         fileSize: '0 MB', // Size calculation would need to be implemented
                                         customerName: customerName || 'Unknown',
-                                        reportDate: selectedDate ? selectedDate.toString() : new Date().toISOString(),
+                                        reportDate: selectedDate ? selectedDate.toDate(getLocalTimeZone()).toISOString() : new Date().toISOString(),
                                         employeeCount: selectedEmployees.length,
                                         generationParams: {
                                             selectedCategories: selectedCategoriesForAPI,
