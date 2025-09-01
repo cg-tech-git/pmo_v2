@@ -23,8 +23,35 @@ import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Badge } from "@/components/base/badges/badges";
 import { Tag, TagGroup, TagList } from "@/components/base/tags/tags";
 import { PaginationButtonGroup } from "@/components/application/pagination/pagination";
+import { useSession } from "next-auth/react";
+import { EmailModal } from "@/components/application/modals/email-modal";
 
+// Gmail Icon Component
+const GmailIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1067 1067" className={className} style={{fillRule:"evenodd",clipRule:"evenodd",strokeLinejoin:"round",strokeMiterlimit:2}}>
+    <g>
+      <path d="M1000.02,171.48c-0,-27.627 -10.975,-54.122 -30.51,-73.657c-19.535,-19.535 -46.03,-30.509 -73.657,-30.509l-725,-0c-27.627,-0 -54.122,10.974 -73.657,30.509c-19.535,19.535 -30.51,46.03 -30.51,73.657l0,725c0,27.627 10.975,54.122 30.51,73.657c19.535,19.535 46.03,30.51 73.657,30.51l725,-0c27.627,-0 54.122,-10.975 73.657,-30.51c19.535,-19.535 30.51,-46.03 30.51,-73.657l-0,-725Z" style={{fill:"#fff"}}/>
+      <g>
+        <path d="M200.017,359.054c-0,-19.262 7.652,-37.735 21.272,-51.355c13.62,-13.62 32.093,-21.272 51.354,-21.272c0.002,0 0.003,0 0.004,0c10.534,0 20.783,3.429 29.196,9.769c-0,-0 157.534,118.711 212.7,160.281c11.135,8.39 26.48,8.39 37.614,0l212.7,-160.281c8.414,-6.34 18.662,-9.769 29.197,-9.769c0.001,0 0.002,0 0.003,0c19.262,0 37.734,7.652 51.355,21.272c13.62,13.62 21.271,32.093 21.271,51.355c0,28.547 0,380.771 0,380.771c0,23.731 -19.237,42.969 -42.969,42.969l-94.783,0c-2.763,0 -5.412,-1.097 -7.366,-3.051c-1.953,-1.953 -3.051,-4.603 -3.051,-7.365c0,-48.176 0,-247.043 0,-247.043c0,-0 -119.26,89.869 -166.357,125.359c-11.134,8.39 -26.479,8.39 -37.614,-0c-47.097,-35.49 -166.357,-125.359 -166.357,-125.359l0,247.043c0,2.762 -1.097,5.412 -3.051,7.365c-1.953,1.954 -4.603,3.051 -7.366,3.051c-19.395,0 -62.043,0 -94.783,0c-23.731,0 -42.969,-19.238 -42.969,-42.969c-0,-105.472 -0,-380.771 -0,-380.771Z" style={{fill:"#e94335"}}/>
+        <path d="M348.186,331.118l171.789,129.452c7.918,5.967 18.832,5.967 26.751,-0l171.788,-129.452l0,194.217c0,-0 -129.271,97.413 -171.788,129.452c-7.919,5.967 -18.833,5.967 -26.751,-0l-171.789,-129.452l0,-194.217Z" style={{fill:"#e94335"}}/>
+        <path d="M348.186,331.118l0,444.268c0,4.091 -3.317,7.408 -7.408,7.408c-17.64,0 -63.235,0 -97.792,0c-23.731,0 -42.969,-19.238 -42.969,-42.969c-0,-105.472 -0,-380.771 -0,-380.771c-0,-19.262 7.652,-37.735 21.272,-51.355c13.62,-13.62 32.093,-21.272 51.354,-21.272c0.002,0 0.003,0 0.004,0c10.534,0 20.783,3.429 29.196,9.769l46.343,34.922Z" style={{fill:"#4284f7"}}/>
+        <path d="M718.514,331.118l0,444.268c0,4.091 3.317,7.408 7.409,7.408c17.639,0 63.234,0 97.791,0c23.732,0 42.969,-19.238 42.969,-42.969c0,-105.472 0,-380.771 0,-380.771c0,-19.262 -7.651,-37.735 -21.271,-51.355c-13.621,-13.62 -32.093,-21.272 -51.355,-21.272c-0.001,0 -0.002,0 -0.003,0c-10.535,0 -20.783,3.429 -29.197,9.769l-46.343,34.922Z" style={{fill:"#34a853"}}/>
+        <path d="M200.017,416.595l-0,-57.541c-0,-19.262 7.652,-37.735 21.272,-51.355c13.62,-13.62 32.093,-21.272 51.354,-21.272c0.002,0 0.003,0 0.004,0c10.534,0 20.783,3.429 29.196,9.769l46.343,34.922l0,194.217l-148.169,-108.74Z" style={{fill:"#c6221e"}}/>
+        <path d="M866.683,416.595l0,-57.541c0,-19.262 -7.651,-37.735 -21.271,-51.355c-13.621,-13.62 -32.093,-21.272 -51.355,-21.272c-0.001,0 -0.002,0 -0.003,0c-10.535,0 -20.783,3.429 -29.197,9.769l-46.343,34.922l0,194.217l148.169,-108.74Z" style={{fill:"#fcbc05"}}/>
+      </g>
+    </g>
+  </svg>
+);
 
+// Excel Icon Component
+const ExcelIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" className={className}>
+    <path fill="#0C9954" d="M4.5 3C4.5 2.44772 4.94772 2 5.5 2H15.75L19.5 5.75V21C19.5 21.5523 19.0523 22 18.5 22H5.5C4.94772 22 4.5 21.5523 4.5 21V3Z"/>
+    <path fill="#85CCAA" d="M15.75 2L19.5 5.75H16.75C16.1977 5.75 15.75 5.30228 15.75 4.75V2Z"/>
+    <path fill="#fff" fillRule="evenodd" d="M6.375 4.125C6.375 3.98693 6.48693 3.875 6.625 3.875H8C8.13807 3.875 8.25 3.98693 8.25 4.125V4.8125H9.5625C9.70057 4.8125 9.8125 4.92443 9.8125 5.0625V6.75C9.8125 6.88807 9.70057 7 9.5625 7H6.625C6.48693 7 6.375 6.88807 6.375 6.75V4.8125V4.125ZM6.8375 4.8125H7.7875C7.87034 4.8125 7.9375 4.74534 7.9375 4.6625V4.3375C7.9375 4.25466 7.87034 4.1875 7.7875 4.1875H6.8375C6.75466 4.1875 6.6875 4.25466 6.6875 4.3375V4.6625C6.6875 4.74534 6.75466 4.8125 6.8375 4.8125ZM6.8375 5.125C6.75466 5.125 6.6875 5.19216 6.6875 5.275V5.6C6.6875 5.68284 6.75466 5.75 6.8375 5.75H7.7875C7.87034 5.75 7.9375 5.68284 7.9375 5.6V5.275C7.9375 5.19216 7.87034 5.125 7.7875 5.125H6.8375ZM8.25 5.275C8.25 5.19216 8.31716 5.125 8.4 5.125H9.35C9.43284 5.125 9.5 5.19216 9.5 5.275V5.6C9.5 5.68284 9.43284 5.75 9.35 5.75H8.4C8.31716 5.75 8.25 5.68284 8.25 5.6V5.275ZM6.8375 6.0625C6.75466 6.0625 6.6875 6.12966 6.6875 6.2125V6.5375C6.6875 6.62034 6.75466 6.6875 6.8375 6.6875H7.7875C7.87034 6.6875 7.9375 6.62034 7.9375 6.5375V6.2125C7.9375 6.12966 7.87034 6.0625 7.7875 6.0625H6.8375ZM8.25 6.2125C8.25 6.12966 8.31716 6.0625 8.4 6.0625H9.35C9.43284 6.0625 9.5 6.12966 9.5 6.2125V6.5375C9.5 6.62034 9.43284 6.6875 9.35 6.6875H8.4C8.31716 6.6875 8.25 6.62034 8.25 6.5375V6.2125Z" clipRule="evenodd"/>
+    <path fill="#fff" d="M13.9067 16.834L14.3425 17.7202 14.7783 16.834H15.5107L14.7673 18.156 15.5309 19.5H14.7911L14.3425 18.5973 13.8939 19.5H13.1523L13.9177 18.156 13.1725 16.834H13.9067zM12.3734 18.7909C12.3734 18.7494 12.3673 18.7122 12.3551 18.6792 12.3429 18.645 12.3203 18.6133 12.2874 18.584 12.2544 18.5547 12.2068 18.5254 12.1445 18.4961 12.0835 18.4656 12.0029 18.4338 11.9028 18.4009 11.7856 18.3618 11.6727 18.3179 11.5641 18.269 11.4554 18.219 11.3584 18.161 11.2729 18.0951 11.1875 18.028 11.1198 17.9498 11.0697 17.8607 11.0197 17.7704 10.9946 17.6654 10.9946 17.5458 10.9946 17.431 11.0203 17.3279 11.0715 17.2363 11.1228 17.1436 11.1942 17.0648 11.2858 17.0001 11.3785 16.9342 11.4872 16.8842 11.6117 16.85 11.7362 16.8146 11.8723 16.7969 12.02 16.7969 12.2153 16.7969 12.3875 16.8311 12.5364 16.8994 12.6865 16.9666 12.8037 17.0624 12.8879 17.1869 12.9734 17.3102 13.0161 17.4561 13.0161 17.6245H12.3771C12.3771 17.5574 12.363 17.4982 12.335 17.4469 12.3081 17.3956 12.2672 17.3553 12.2123 17.326 12.1573 17.2968 12.0884 17.2821 12.0054 17.2821 11.9248 17.2821 11.8571 17.2943 11.8021 17.3187 11.7472 17.3431 11.7057 17.3761 11.6776 17.4176 11.6495 17.4579 11.6355 17.5024 11.6355 17.5513 11.6355 17.5916 11.6465 17.6282 11.6685 17.6611 11.6917 17.6929 11.724 17.7228 11.7655 17.7509 11.8082 17.7789 11.8595 17.8058 11.9193 17.8314 11.9803 17.8571 12.0487 17.8821 12.1244 17.9065 12.266 17.9517 12.3917 18.0023 12.5016 18.0585 12.6127 18.1134 12.7061 18.1763 12.7817 18.2471 12.8586 18.3167 12.9166 18.396 12.9557 18.4851 12.996 18.5742 13.0161 18.6749 13.0161 18.7872 13.0161 18.9069 12.9929 19.0131 12.9465 19.1058 12.9001 19.1986 12.8336 19.2773 12.7469 19.342 12.6603 19.4055 12.5565 19.4537 12.4357 19.4867 12.3148 19.5197 12.1799 19.5361 12.031 19.5361 11.8943 19.5361 11.7594 19.519 11.6263 19.4849 11.4945 19.4495 11.3749 19.3958 11.2675 19.3237 11.16 19.2505 11.074 19.1571 11.0093 19.0436 10.9458 18.9288 10.9141 18.7927 10.9141 18.6353H11.5586C11.5586 18.7134 11.569 18.7793 11.5897 18.833 11.6105 18.8867 11.641 18.9301 11.6813 18.963 11.7216 18.9948 11.771 19.0179 11.8296 19.0326 11.8882 19.046 11.9553 19.0527 12.031 19.0527 12.1128 19.0527 12.1787 19.0411 12.2288 19.0179 12.2788 18.9935 12.3154 18.9618 12.3386 18.9227 12.3618 18.8824 12.3734 18.8385 12.3734 18.7909zM10.7302 19.0056V19.5H9.61145V19.0056H10.7302zM9.61145 16.834V19.5H8.96875V16.834H9.61145zM7.13135 16.834L7.56714 17.7202 8.00293 16.834H8.73535L7.99194 18.156 8.75549 19.5H8.01575L7.56714 18.5973 7.11853 19.5H6.37695L7.14233 18.156 6.39709 16.834H7.13135z"/>
+  </svg>
+);
 
 // Employee data types - matching BigQuery Employee_List view structure
 interface Employee {
@@ -54,13 +81,17 @@ interface ReportItem {
     };
 }
 
-// Load reports from localStorage or initialize empty
-const getStoredReports = (): ReportItem[] => {
-    if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('reportHistory');
-        return stored ? JSON.parse(stored) : [];
+// Fetch reports from API
+const fetchReports = async (): Promise<ReportItem[]> => {
+    try {
+        const response = await fetch('/api/reports');
+        if (!response.ok) throw new Error('Failed to fetch reports');
+        const result = await response.json();
+        return result.data || [];
+    } catch (error) {
+        console.error('Error fetching reports:', error);
+        return [];
     }
-    return [];
 };
 
 // Modal data structure
@@ -445,13 +476,17 @@ const InlineExpandedSection = ({
 };
 
 // Reports History Table Component
-const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, setToastMessage, setToastType, setShowToast }: { 
+const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, setToastMessage, setToastType, setShowToast, setEmailReportItem, setEmailModalOpen, totalDownloads, totalEmails }: { 
     reportHistory: ReportItem[]; 
     onDeleteReport: (reportName: string) => void;
     onDownloadReport: (reportItem: ReportItem) => void;
     setToastMessage: (message: string) => void;
     setToastType: (type: 'success' | 'error' | 'info') => void;
     setShowToast: (show: boolean) => void;
+    setEmailReportItem: (item: ReportItem | null) => void;
+    setEmailModalOpen: (open: boolean) => void;
+    totalDownloads: number;
+    totalEmails: number;
 }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -469,8 +504,6 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
         const d = new Date(it.uploadedAt);
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
-    const totalDownloads = 0;
-    const totalEmails = 0;
     const secondsPerReport = 2 * 3600 + 59 * 60; // 2:59:00 per report
     const totalTimeSavedSeconds = totalReports * secondsPerReport;
     const totalTimeSavedHrs = Math.floor(totalTimeSavedSeconds / 3600);
@@ -636,10 +669,8 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
                                         aria-label="Email"
                                         className="p-1 rounded hover:bg-transparent focus:outline-none"
                                         onClick={() => {
-                                            setToastMessage('Demo - email sent');
-                                            setToastType('info');
-                                            setShowToast(true);
-                                            setTimeout(() => setShowToast(false), 3000);
+                                            setEmailReportItem(item);
+                                            setEmailModalOpen(true);
                                         }}
                                     >
                                         <Mail01 className="size-5 text-tertiary" />
@@ -967,6 +998,9 @@ const ProgressIconCenteredSm = ({ onStepClick, confirmedSteps, items, selectedEm
 };
 
 export default function HomePage() {
+    // Get user session data
+    const { data: session } = useSession();
+    
     const [openModal, setOpenModal] = useState<string | null>(null);
     const [items, setItems] = useState(modalData);
     const [confirmedSteps, setConfirmedSteps] = useState<Set<number>>(new Set());
@@ -984,26 +1018,40 @@ export default function HomePage() {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
     
+    // Email modal state
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [emailReportItem, setEmailReportItem] = useState<ReportItem | null>(null);
+    
     // Report form states
     const [customerName, setCustomerName] = useState('');
     const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
     const [reportHistory, setReportHistory] = useState<ReportItem[]>([]);
+    
+    // Scorecard tracking states
+    const [totalDownloads, setTotalDownloads] = useState(0);
+    const [totalEmails, setTotalEmails] = useState(0);
 
-    // Load reports from localStorage on component mount
+    // Load reports from API on component mount
     useEffect(() => {
-        const storedReports = getStoredReports();
-        setReportHistory(storedReports);
+        const loadReports = async () => {
+            const reports = await fetchReports();
+            setReportHistory(reports);
+        };
+        loadReports();
     }, []);
 
-    // Save reports to localStorage whenever they change
+    // Periodically refresh reports to see updates from other users
     useEffect(() => {
-        if (reportHistory.length > 0 || localStorage.getItem('reportHistory')) {
-            localStorage.setItem('reportHistory', JSON.stringify(reportHistory));
-        }
-    }, [reportHistory]);
+        const interval = setInterval(async () => {
+            const reports = await fetchReports();
+            setReportHistory(reports);
+        }, 30000); // Refresh every 30 seconds
+
+        return () => clearInterval(interval);
+    }, []);
 
     const handleStepClick = (stepIndex: number) => {
-        console.log('handleStepClick called with stepIndex:', stepIndex);
+        // Handle step click
         // Toggle expanded state
         if (expandedStep === stepIndex) {
             setExpandedStep(null);
@@ -1146,7 +1194,10 @@ export default function HomePage() {
                 
                 // Create a report for each selected format
                 const createdFileNames: string[] = [];
-                const newReports = selectedFormats.map(format => {
+                const newReports: ReportItem[] = [];
+                
+                // Process each format and save to database
+                for (const format of selectedFormats) {
                     let extension = '.zip';
                     if (format.id === 'export-pdf') extension = '.pdf';
                     else if (format.id === 'export-xlsx') extension = '.xlsx';
@@ -1154,24 +1205,49 @@ export default function HomePage() {
                     const baseName = `${customerNameCleaned}_${dateStr}`;
                     const fileName = getUniqueFileName(baseName, extension, createdFileNames);
                     createdFileNames.push(fileName); // Add to the list of created files
+                    const fileSize = `${(Math.random() * 2 + 0.5).toFixed(1)} MB`;
                     
-                    return {
-                        name: fileName,
-                        fileType: extension,
-                        size: `${(Math.random() * 2 + 0.5).toFixed(1)} MB`,
-                        uploadedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                        updatedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                        uploadedBy: "Current User",
-                        // Store generation parameters for re-downloading
-                        generationParams: {
-                            customerName: customerName.trim(),
-                            reportDate: dateStr,
-                            selectedEmployees: [...selectedEmployees],
-                            selectedCategories: JSON.parse(JSON.stringify(selectedCategories)),
-                            reportFormat: format.id
-                        }
+                    const generationParams = {
+                        customerName: customerName.trim(),
+                        reportDate: dateStr,
+                        selectedEmployees: [...selectedEmployees],
+                        selectedCategories: JSON.parse(JSON.stringify(selectedCategories)),
+                        reportFormat: format.id
                     };
-                });
+                    
+                    try {
+                        // Save to database
+                        const saveResponse = await fetch('/api/reports', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                reportName: fileName,
+                                fileType: extension,
+                                fileSize: fileSize,
+                                customerName: customerName.trim(),
+                                reportDate: dateStr,
+                                employeeCount: selectedEmployees.size,
+                                generationParams: generationParams
+                            })
+                        });
+                        
+                        if (!saveResponse.ok) {
+                            console.error('Failed to save report to database');
+                        }
+                        
+                        newReports.push({
+                            name: fileName,
+                            fileType: extension,
+                            size: fileSize,
+                            uploadedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                            updatedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                            uploadedBy: session?.user?.email || "Unknown User",
+                            generationParams: generationParams
+                        });
+                    } catch (error) {
+                        console.error('Error saving report:', error);
+                    }
+                }
                 
                 // Call API to generate report
                 try {
@@ -1202,8 +1278,9 @@ export default function HomePage() {
                         // Generate the report client-side
                         await generateReport(result.data, reportFormats);
                         
-                        // Add new reports to the beginning of the list
-                        setReportHistory([...newReports, ...reportHistory]);
+                        // Refresh reports from database to show the new ones
+                        const updatedReports = await fetchReports();
+                        setReportHistory(updatedReports);
                         
                         // Show success toast message
                         const formatCount = selectedFormats.length;
@@ -1334,8 +1411,15 @@ export default function HomePage() {
         setSelectedEmployees([]);
     };
 
-    const deleteReport = (reportName: string) => {
+    const deleteReport = async (reportName: string) => {
+        // For now, we'll just remove from UI since we don't have report IDs stored
+        // In a future update, we should store the report ID and use it for deletion
         setReportHistory(reportHistory.filter(report => report.name !== reportName));
+        
+        // Note: To properly implement deletion, we need to:
+        // 1. Store the report ID when fetching from database
+        // 2. Pass the ID to this function
+        // 3. Call DELETE /api/reports?id={reportId}
     };
 
     const downloadReport = async (reportItem: ReportItem) => {
@@ -1354,6 +1438,13 @@ export default function HomePage() {
 
             const { generationParams } = reportItem;
             
+            // Determine the format
+            const reportFormats = {
+                pdf: generationParams.reportFormat === 'export-pdf',
+                xlsx: generationParams.reportFormat === 'export-xlsx',
+                zip: generationParams.reportFormat === 'export-zip'
+            };
+            
             // Call the API to get fresh data
             const response = await fetch('/api/generate-report', {
                 method: 'POST',
@@ -1365,7 +1456,7 @@ export default function HomePage() {
                     reportDate: generationParams.reportDate,
                     selectedEmployees: generationParams.selectedEmployees,
                     selectedCategories: generationParams.selectedCategories,
-                    reportFormats: [generationParams.reportFormat]
+                    reportFormats: reportFormats
                 })
             });
 
@@ -1379,15 +1470,11 @@ export default function HomePage() {
                 // Import report generator dynamically
                 const { generateReport } = await import('@/lib/report-generator');
                 
-                // Determine the format
-                const reportFormats = {
-                    pdf: generationParams.reportFormat === 'export-pdf',
-                    xlsx: generationParams.reportFormat === 'export-xlsx',
-                    zip: generationParams.reportFormat === 'export-zip'
-                };
-                
                 // Generate and download the report
                 await generateReport(result.data, reportFormats);
+                
+                // Increment download counter
+                setTotalDownloads(prev => prev + 1);
                 
                 setToastMessage('Report downloaded successfully');
                 setToastType('success');
@@ -1399,6 +1486,51 @@ export default function HomePage() {
             setToastMessage('Failed to download report. Please try again.');
             setToastType('error');
         } finally {
+            setTimeout(() => setShowToast(false), 3000);
+        }
+    };
+
+    const emailReport = async (reportItem: ReportItem, emailData: {
+        recipients: string[];
+        ccRecipients: string[];
+        bccRecipients: string[];
+        subject: string;
+        message: string;
+    }) => {
+        try {
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...emailData,
+                    reportItem
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 403 && result.requiresReauth) {
+                    setToastMessage('Please sign out and sign in again to grant email permissions');
+                    setToastType('error');
+                } else {
+                    throw new Error(result.error || 'Failed to send email');
+                }
+            } else {
+                // Increment email counter
+                setTotalEmails(prev => prev + 1);
+                
+                setToastMessage('Email sent successfully');
+                setToastType('success');
+            }
+        } catch (error: any) {
+            console.error('Error sending email:', error);
+            setToastMessage(error.message || 'Failed to send email');
+            setToastType('error');
+        } finally {
+            setShowToast(true);
             setTimeout(() => setShowToast(false), 3000);
         }
     };
@@ -1507,8 +1639,34 @@ export default function HomePage() {
                     setToastMessage={setToastMessage}
                     setToastType={setToastType}
                     setShowToast={setShowToast}
+                    setEmailReportItem={setEmailReportItem}
+                    setEmailModalOpen={setEmailModalOpen}
+                    totalDownloads={totalDownloads}
+                    totalEmails={totalEmails}
                 />
             </div>
+
+            {/* Email Modal - Using custom overlay pattern */}
+            {emailModalOpen && emailReportItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    {/* Light overlay background */}
+                    <div 
+                        className="absolute inset-0 bg-black/60"
+                        onClick={() => setEmailModalOpen(false)}
+                    />
+                    {/* Modal content */}
+                    <div className="relative z-10 w-full max-w-2xl mx-4">
+                        <EmailModal
+                            reportItem={emailReportItem}
+                            onSend={async (emailData) => {
+                                await emailReport(emailReportItem, emailData);
+                                setEmailModalOpen(false);
+                            }}
+                            onClose={() => setEmailModalOpen(false)}
+                        />
+                    </div>
+                </div>
+            )}
 
             </div>
         </div>

@@ -1,0 +1,17 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+
+export async function GET() {
+  const session = await auth();
+  
+  return NextResponse.json({
+    message: 'Middleware test endpoint',
+    timestamp: new Date().toISOString(),
+    hasSession: !!session,
+    sessionData: session ? {
+      user: session.user,
+      expires: session.expires
+    } : null,
+  });
+}
+

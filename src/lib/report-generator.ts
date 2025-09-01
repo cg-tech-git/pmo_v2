@@ -155,12 +155,12 @@ export async function generatePDFReport(data: ReportData): Promise<Blob> {
                 passportDoc: validPassports[0],
                 fieldMapping: fieldInfo.mapping.label
               });
-              value = fieldInfo.mapping.getValue(validPassports[0], employee) || 'N/A';
+              value = fieldInfo.mapping.getValue(employee, validPassports[0]) || 'N/A';
             }
           } else {
             // For other document types, try to find a value from any document
             for (const doc of employeeDocs) {
-              const docValue = fieldInfo.mapping.getValue(doc, employee);
+              const docValue = fieldInfo.mapping.getValue(employee, doc);
               if (docValue && docValue !== 'N/A') {
                 value = docValue;
                 break;
@@ -271,7 +271,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
   
   // Passport Info
   console.log('Checking passportInfo:', data.selectedCategories.passportInfo);
-  if (data.selectedCategories.passportInfo && data.selectedCategories.employmentInfo.length > 0) {
+  if (data.selectedCategories.passportInfo && data.selectedCategories.passportInfo.length > 0) {
     console.log('Processing passportInfo fields:', data.selectedCategories.passportInfo);
     data.selectedCategories.passportInfo.forEach(fieldId => {
       console.log('Processing passportInfo field:', fieldId);
@@ -284,7 +284,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
   
   // Visa Info
   console.log('Checking visaInfo:', data.selectedCategories.visaInfo);
-  if (data.selectedCategories.visaInfo && data.selectedCategories.employmentInfo.length > 0) {
+  if (data.selectedCategories.visaInfo && data.selectedCategories.visaInfo.length > 0) {
     console.log('Processing visaInfo fields:', data.selectedCategories.visaInfo);
     data.selectedCategories.visaInfo.forEach(fieldId => {
       console.log('Processing visaInfo field:', fieldId);
@@ -297,7 +297,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
   
   // EID Info
   console.log('Checking eidInfo:', data.selectedCategories.eidInfo);
-  if (data.selectedCategories.eidInfo && data.selectedCategories.employmentInfo.length > 0) {
+  if (data.selectedCategories.eidInfo && data.selectedCategories.eidInfo.length > 0) {
     console.log('Processing eidInfo fields:', data.selectedCategories.eidInfo);
     data.selectedCategories.eidInfo.forEach(fieldId => {
       console.log('Processing eidInfo field:', fieldId);
@@ -309,7 +309,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
   
   // MOL Info
   console.log('Checking molInfo:', data.selectedCategories.molInfo);
-  if (data.selectedCategories.molInfo && data.selectedCategories.employmentInfo.length > 0) {
+  if (data.selectedCategories.molInfo && data.selectedCategories.molInfo.length > 0) {
     console.log('Processing molInfo fields:', data.selectedCategories.molInfo);
     data.selectedCategories.molInfo.forEach(fieldId => {
       console.log('Processing molInfo field:', fieldId);
@@ -336,7 +336,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
   }
   
   // Insurance Info
-  if (data.selectedCategories.insuranceInfo && data.selectedCategories.employmentInfo.length > 0) {
+  if (data.selectedCategories.insuranceInfo && data.selectedCategories.insuranceInfo.length > 0) {
     data.selectedCategories.insuranceInfo.forEach(fieldId => {
       if (fieldId === 'insurance-type') headers.push('Insurance Type');
       else if (fieldId === 'insurance-issue-date') headers.push('Insurance Issue Date');
@@ -386,7 +386,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
     }
     
     // Add Passport Info fields
-    if (data.selectedCategories.passportInfo && data.selectedCategories.employmentInfo.length > 0) {
+    if (data.selectedCategories.passportInfo && data.selectedCategories.passportInfo.length > 0) {
       const passportDocs = data.documents?.passportInfo || [];
       const employeePassports = passportDocs
         .filter((doc: any) => doc.employee_code === employee.EmployeeCode)
@@ -405,14 +405,14 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
       data.selectedCategories.passportInfo.forEach(fieldId => {
         const mapping = passportInfoMapping[fieldId];
         if (mapping) {
-          const value = mapping.getValue(passportDoc || {}, employee) || 'N/A';
+          const value = mapping.getValue(employee, passportDoc || {}) || 'N/A';
           row.push(value);
         }
       });
     }
     
     // Add Visa Info fields
-    if (data.selectedCategories.visaInfo && data.selectedCategories.employmentInfo.length > 0) {
+    if (data.selectedCategories.visaInfo && data.selectedCategories.visaInfo.length > 0) {
       const visaDocs = data.documents?.visaInfo || [];
       const employeeVisas = visaDocs
         .filter((doc: any) => doc.employee_code === employee.EmployeeCode)
@@ -431,14 +431,14 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
       data.selectedCategories.visaInfo.forEach(fieldId => {
         const mapping = visaInfoMapping[fieldId];
         if (mapping) {
-          const value = mapping.getValue(visaDoc || {}, employee) || 'N/A';
+          const value = mapping.getValue(employee, visaDoc || {}) || 'N/A';
           row.push(value);
         }
       });
     }
     
     // Add EID Info fields
-    if (data.selectedCategories.eidInfo && data.selectedCategories.employmentInfo.length > 0) {
+    if (data.selectedCategories.eidInfo && data.selectedCategories.eidInfo.length > 0) {
       const eidDocs = data.documents?.eidInfo || [];
       const employeeEids = eidDocs
         .filter((doc: any) => doc.employee_code === employee.EmployeeCode)
@@ -457,14 +457,14 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
       data.selectedCategories.eidInfo.forEach(fieldId => {
         const mapping = eidInfoMapping[fieldId];
         if (mapping) {
-          const value = mapping.getValue(eidDoc || {}, employee) || 'N/A';
+          const value = mapping.getValue(employee, eidDoc || {}) || 'N/A';
           row.push(value);
         }
       });
     }
     
     // Add MOL Info fields
-    if (data.selectedCategories.molInfo && data.selectedCategories.employmentInfo.length > 0) {
+    if (data.selectedCategories.molInfo && data.selectedCategories.molInfo.length > 0) {
       const molDocs = data.documents?.molInfo || [];
       const employeeMols = molDocs
         .filter((doc: any) => doc.employee_code === employee.EmployeeCode)
@@ -483,14 +483,14 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
       data.selectedCategories.molInfo.forEach(fieldId => {
         const mapping = molInfoMapping[fieldId];
         if (mapping) {
-          const value = mapping.getValue(molDoc || {}, employee) || 'N/A';
+          const value = mapping.getValue(employee, molDoc || {}) || 'N/A';
           row.push(value);
         }
       });
     }
     
     // Add Insurance Info fields
-    if (data.selectedCategories.insuranceInfo && data.selectedCategories.employmentInfo.length > 0) {
+    if (data.selectedCategories.insuranceInfo && data.selectedCategories.insuranceInfo.length > 0) {
       const insuranceDocs = data.documents?.insuranceInfo || [];
       const employeeInsurances = insuranceDocs
         .filter((doc: any) => doc.employee_code === employee.EmployeeCode)
@@ -509,7 +509,7 @@ export async function generateExcelReport(data: ReportData): Promise<Blob> {
       data.selectedCategories.insuranceInfo.forEach(fieldId => {
         const mapping = insuranceInfoMapping[fieldId];
         if (mapping) {
-          const value = mapping.getValue(insuranceDoc || {}, employee) || 'N/A';
+          const value = mapping.getValue(employee, insuranceDoc || {}) || 'N/A';
           row.push(value);
         }
       });
@@ -570,4 +570,40 @@ export async function generateReport(
       saveAs(excelBlob, `${fileName}.xlsx`);
     }
   }
+}
+
+// Generate report as buffer for email attachment
+export async function generateReportBuffer(
+  data: ReportData,
+  formats: { pdf?: boolean; xlsx?: boolean; zip?: boolean }
+): Promise<{ buffer: Buffer; mimeType: string; filename: string }> {
+  const fileName = `${data.customerName}_${data.reportDate}`;
+  
+  if (formats.zip) {
+    const zipBlob = await generateZIPReport(data);
+    const buffer = Buffer.from(await zipBlob.arrayBuffer());
+    return {
+      buffer,
+      mimeType: 'application/zip',
+      filename: `${fileName}.zip`
+    };
+  } else if (formats.pdf) {
+    const pdfBlob = await generatePDFReport(data);
+    const buffer = Buffer.from(await pdfBlob.arrayBuffer());
+    return {
+      buffer,
+      mimeType: 'application/pdf',
+      filename: `${fileName}.pdf`
+    };
+  } else if (formats.xlsx) {
+    const xlsxBlob = await generateExcelReport(data);
+    const buffer = Buffer.from(await xlsxBlob.arrayBuffer());
+    return {
+      buffer,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      filename: `${fileName}.xlsx`
+    };
+  }
+  
+  throw new Error('No report format specified');
 }

@@ -12,6 +12,22 @@ export async function POST(request: NextRequest) {
       reportFormats 
     } = body;
     
+    // Log the received data for debugging
+    console.log('Received request body:', {
+      customerName,
+      reportDate,
+      selectedEmployeesType: typeof selectedEmployees,
+      selectedEmployeesIsArray: Array.isArray(selectedEmployees),
+      selectedEmployeesLength: selectedEmployees?.length,
+      reportFormats
+    });
+    
+    // Validate input
+    if (!selectedEmployees || !Array.isArray(selectedEmployees)) {
+      console.error('Invalid selectedEmployees:', selectedEmployees);
+      throw new Error(`selectedEmployees must be an array, received: ${typeof selectedEmployees}`);
+    }
+    
     console.log('Generating report for:', {
       customerName,
       reportDate,

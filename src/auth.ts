@@ -10,9 +10,17 @@ export const config = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: 'openid email profile https://www.googleapis.com/auth/gmail.send',
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   callbacks: {
     async signIn({ user, account, profile }) {
       // Only allow sign-in if user's email is from allowed domains
@@ -26,12 +34,22 @@ export const config = {
       
       return true
     },
+    async jwt({ token, account }) {
+      // Store the access token and refresh token in the JWT on sign in
+      if (account) {
+        token.accessToken = account.access_token
+        token.refreshToken = account.refresh_token
+      }
+      return token
+    },
     async session({ session, token }) {
       // Add custom fields to session if needed
       if (session.user?.email) {
         // You can add employee data here later
         // For example: session.user.employeeCode = await getEmployeeCode(session.user.email)
       }
+      // Add access token to session
+      session.accessToken = token.accessToken as string
       return session
     },
     async redirect({ url, baseUrl }) {

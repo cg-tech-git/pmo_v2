@@ -6,7 +6,18 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const isAuthPage = req.nextUrl.pathname.startsWith("/signin")
   const isApiAuthRoute = req.nextUrl.pathname.startsWith("/api/auth")
-  const isPublicRoute = isAuthPage || isApiAuthRoute
+  const isDebugRoute = req.nextUrl.pathname.startsWith("/api/debug")
+  const isPublicRoute = isAuthPage || isApiAuthRoute || isDebugRoute
+
+  // Log for debugging in production
+  console.log('Middleware:', {
+    pathname: req.nextUrl.pathname,
+    isLoggedIn,
+    isAuthPage,
+    isApiAuthRoute,
+    isPublicRoute,
+    auth: req.auth
+  })
 
   // If user is not logged in and trying to access protected route
   if (!isLoggedIn && !isPublicRoute) {
@@ -24,5 +35,16 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg|images|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.ico|api/auth).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, favicon.svg (favicon file)
+     * - images/ (images directory)
+     * - Static file extensions
+     */
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|favicon.svg|images/|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$|.*\\.ico$).*)",
+  ],
 }

@@ -6,13 +6,24 @@ let bigqueryClient: BigQuery | null = null;
 
 export function getBigQueryClient(): BigQuery {
   if (!bigqueryClient) {
-    // Set up credentials path
-    const credentialsPath = path.join(process.cwd(), 'credentials', 'pmo-service-account-key.json');
+    // In production (Cloud Run), use default credentials
+    // In development, use service account key file
+    const isProduction = process.env.NODE_ENV === 'production';
     
-    bigqueryClient = new BigQuery({
-      projectId: process.env.NEXT_PUBLIC_GCP_PROJECT_ID || 'pmo-v2',
-      keyFilename: credentialsPath,
-    });
+    if (isProduction) {
+      // Use Application Default Credentials in Cloud Run
+      bigqueryClient = new BigQuery({
+        projectId: process.env.NEXT_PUBLIC_GCP_PROJECT_ID || 'pmo-v2',
+      });
+    } else {
+      // Use service account key file in development
+      const credentialsPath = path.join(process.cwd(), 'credentials', 'pmo-service-account-key.json');
+      
+      bigqueryClient = new BigQuery({
+        projectId: process.env.NEXT_PUBLIC_GCP_PROJECT_ID || 'pmo-v2',
+        keyFilename: credentialsPath,
+      });
+    }
   }
   
   return bigqueryClient;
@@ -72,6 +83,7 @@ export async function getEmployees(filters?: {
     return rows;
   } catch (error) {
     console.error('Error querying employees:', error);
+    console.error('Query details:', { query, queryParams, location: process.env.BIGQUERY_LOCATION || 'US' });
     throw error;
   }
 }
@@ -118,6 +130,8 @@ export async function getEmployeeDetails(employeeCodes: string[], selectedFields
       results.employeeDetails = rows;
     } catch (error) {
       console.error('Error querying employee details:', error);
+      console.error('Employee codes:', employeeCodes);
+      console.error('Selected fields:', selectedFields);
       results.employeeDetails = [];
     }
   }
@@ -182,6 +196,8 @@ export async function getEmployeeDetails(employeeCodes: string[], selectedFields
       results.documents = groupedDocs;
     } catch (error) {
       console.error('Error querying employee documents:', error);
+      console.error('Employee codes:', employeeCodes);
+      console.error('Query:', query);
       results.documents = {};
     }
   }

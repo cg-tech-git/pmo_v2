@@ -116,3 +116,4 @@ For production:
 - Regularly rotate your `NEXTAUTH_SECRET`
 - Monitor OAuth usage in Google Cloud Console
 - Review sign-in logs periodically
+
