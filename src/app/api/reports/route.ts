@@ -88,6 +88,20 @@ export async function POST(request: NextRequest) {
       employeeCount,
       generationParams,
     } = body;
+    
+    // Validate required fields
+    if (!reportName || !fileType || !customerName || !reportDate) {
+      console.error('POST /api/reports - Missing required fields:', {
+        reportName: !!reportName,
+        fileType: !!fileType,
+        customerName: !!customerName,
+        reportDate: !!reportDate,
+      });
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
     const bigquery = getBigQueryClient();
     const datasetId = 'pmo_data';
@@ -103,7 +117,7 @@ export async function POST(request: NextRequest) {
       created_by_name: session.user?.name || 'Unknown User',
       customer_name: customerName,
       report_date: reportDate,
-      employee_count: employeeCount,
+      employee_count: employeeCount || 0,
       generation_params: JSON.stringify(generationParams),
       cloud_storage_url: null, // To be implemented when we add cloud storage
     };

@@ -1239,7 +1239,7 @@ export default function HomePage() {
                             
                             const reportName = generateFileName(
                                 customerName || 'Report',
-                                selectedDate || new Date(),
+                                selectedDate ? selectedDate.toDate(getLocalTimeZone()) : new Date(),
                                 fileType.toLowerCase()
                             );
                             
@@ -1253,7 +1253,7 @@ export default function HomePage() {
                                         reportName,
                                         fileType,
                                         fileSize: '0 MB', // Size calculation would need to be implemented
-                                        customerName: customerName || 'Unknown',
+                                        customerName: customerName.trim() || 'Unknown',
                                         reportDate: selectedDate ? selectedDate.toDate(getLocalTimeZone()).toISOString() : new Date().toISOString(),
                                         employeeCount: selectedEmployees.length,
                                         generationParams: {
