@@ -119,12 +119,27 @@ export async function POST(request: NextRequest) {
       success: true, 
       data: { id: row.id } 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('POST /api/reports - Error saving report:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
+      errors: error.errors || undefined,
+      response: error.response || undefined,
     });
+    
+    // Log specific BigQuery errors if available
+    if (error.errors && Array.isArray(error.errors)) {
+      error.errors.forEach((err: any, index: number) => {
+        console.error(`BigQuery Error ${index + 1}:`, {
+          reason: err.reason,
+          message: err.message,
+          location: err.location,
+          debugInfo: err.debugInfo,
+        });
+      });
+    }
+    
     return NextResponse.json(
       { error: 'Failed to save report: ' + (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }

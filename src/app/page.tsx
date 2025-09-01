@@ -1207,8 +1207,14 @@ export default function HomePage() {
                 // Process each format and save to database
                 for (const format of selectedFormats) {
                     let extension = '.zip';
-                    if (format.id === 'export-pdf') extension = '.pdf';
-                    else if (format.id === 'export-xlsx') extension = '.xlsx';
+                    let fileTypeForDB = 'ZIP';
+                    if (format.id === 'export-pdf') {
+                        extension = '.pdf';
+                        fileTypeForDB = 'PDF';
+                    } else if (format.id === 'export-xlsx') {
+                        extension = '.xlsx';
+                        fileTypeForDB = 'Excel';
+                    }
                     
                     const baseName = `${customerNameCleaned}_${dateStr}`;
                     const fileName = getUniqueFileName(baseName, extension, createdFileNames);
@@ -1230,10 +1236,10 @@ export default function HomePage() {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 reportName: fileName,
-                                fileType: extension,
+                                fileType: fileTypeForDB,
                                 fileSize: fileSize,
                                 customerName: customerName.trim(),
-                                reportDate: dateStr,
+                                reportDate: new Date().toISOString(), // Use ISO format for date
                                 employeeCount: selectedEmployees.size,
                                 generationParams: generationParams
                             })
@@ -1245,7 +1251,7 @@ export default function HomePage() {
                         
                         newReports.push({
                             name: fileName,
-                            fileType: extension,
+                            fileType: fileTypeForDB,
                             size: fileSize,
                             uploadedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                             updatedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
