@@ -1259,6 +1259,10 @@ export default function HomePage() {
                                         generationParams: {
                                             selectedCategories: selectedCategories,
                                             formats: selectedFormats.map(f => f.id),
+                                            customerName: customerName.trim() || 'Unknown',
+                                            reportDate: selectedDate ? selectedDate.toDate(getLocalTimeZone()).toISOString() : new Date().toISOString(),
+                                            selectedEmployees: selectedEmployees,
+                                            reportFormat: format.id
                                         },
                                     }),
                                 });
@@ -1441,26 +1445,48 @@ export default function HomePage() {
 
             const { generationParams } = reportItem;
             
-            // Determine the format
-            const reportFormats = {
-                pdf: generationParams.reportFormat === 'export-pdf',
-                xlsx: generationParams.reportFormat === 'export-xlsx',
-                zip: generationParams.reportFormat === 'export-zip'
-            };
+            // Determine the format - handle both old and new format
+            let reportFormats;
+            if (generationParams.reportFormat) {
+                // New format - single format string
+                reportFormats = {
+                    pdf: generationParams.reportFormat === 'export-pdf',
+                    xlsx: generationParams.reportFormat === 'export-xlsx',
+                    zip: generationParams.reportFormat === 'export-zip'
+                };
+            } else if (generationParams.formats && generationParams.formats.length > 0) {
+                // Handle multiple formats from formats array
+                reportFormats = {
+                    pdf: generationParams.formats.includes('export-pdf'),
+                    xlsx: generationParams.formats.includes('export-xlsx'),
+                    zip: generationParams.formats.includes('export-zip')
+                };
+            } else {
+                // Fallback - try to determine from file type
+                const fileType = reportItem.fileType.toLowerCase();
+                reportFormats = {
+                    pdf: fileType === 'pdf',
+                    xlsx: fileType === 'excel',
+                    zip: fileType === 'zip'
+                };
+            }
             
             // Call the API to get fresh data
+            // Handle missing fields for backward compatibility
+            const requestBody = {
+                customerName: generationParams.customerName || reportItem.name.split('_')[0] || 'Unknown',
+                reportDate: generationParams.reportDate || new Date().toISOString(),
+                selectedEmployees: generationParams.selectedEmployees || [],
+                selectedCategories: generationParams.selectedCategories || {},
+                reportFormats: reportFormats
+            };
+            
             const response = await fetch('/api/generate-report', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    customerName: generationParams.customerName,
-                    reportDate: generationParams.reportDate,
-                    selectedEmployees: generationParams.selectedEmployees,
-                    selectedCategories: generationParams.selectedCategories,
-                    reportFormats: reportFormats
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {

@@ -43,12 +43,12 @@ export async function GET() {
       name: row.report_name,
       fileType: row.file_type,
       size: row.file_size || '0 MB',
-      uploadedAt: new Date(row.created_at.value).toLocaleDateString('en-US', { 
+      uploadedAt: new Date(row.created_at.value || row.created_at).toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric', 
         year: 'numeric' 
       }),
-      updatedAt: new Date(row.created_at.value).toLocaleDateString('en-US', { 
+      updatedAt: new Date(row.created_at.value || row.created_at).toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric', 
         year: 'numeric' 

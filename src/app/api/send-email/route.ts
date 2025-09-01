@@ -52,29 +52,52 @@ export const POST = auth(async (req) => {
     // Get report data
     const { generationParams } = reportItem;
     
-    // Determine the format
-    const reportFormats = {
-      pdf: generationParams.reportFormat === 'export-pdf',
-      xlsx: generationParams.reportFormat === 'export-xlsx',
-      zip: generationParams.reportFormat === 'export-zip'
-    };
+    // Determine the format - handle both old and new format
+    let reportFormats;
+    if (generationParams.reportFormat) {
+      // New format - single format string
+      reportFormats = {
+        pdf: generationParams.reportFormat === 'export-pdf',
+        xlsx: generationParams.reportFormat === 'export-xlsx',
+        zip: generationParams.reportFormat === 'export-zip'
+      };
+    } else if (generationParams.formats && generationParams.formats.length > 0) {
+      // Handle multiple formats from formats array
+      reportFormats = {
+        pdf: generationParams.formats.includes('export-pdf'),
+        xlsx: generationParams.formats.includes('export-xlsx'),
+        zip: generationParams.formats.includes('export-zip')
+      };
+    } else {
+      // Fallback - determine from file type
+      const fileType = reportItem.fileType?.toLowerCase() || '';
+      reportFormats = {
+        pdf: fileType === 'pdf',
+        xlsx: fileType === 'excel',
+        zip: fileType === 'zip'
+      };
+    }
 
-    // Extract employee codes
-    const employeeCodes = generationParams.selectedEmployees.map((emp: any) => emp.employee_code);
+    // Extract employee codes with fallback
+    const selectedEmployees = generationParams.selectedEmployees || [];
+    const employeeCodes = selectedEmployees.map((emp: any) => 
+      typeof emp === 'string' ? emp : emp.employee_code
+    );
     
     // Fetch employee details from BigQuery
-    const selectedFields = Object.keys(generationParams.selectedCategories).filter(
-      cat => generationParams.selectedCategories[cat] && generationParams.selectedCategories[cat].length > 0
+    const selectedCategories = generationParams.selectedCategories || {};
+    const selectedFields = Object.keys(selectedCategories).filter(
+      cat => selectedCategories[cat] && selectedCategories[cat].length > 0
     );
     
     const employeeData = await getEmployeeDetails(employeeCodes, selectedFields);
     
-    // Prepare report data
+    // Prepare report data with fallbacks for missing fields
     const reportData = {
-      customerName: generationParams.customerName,
-      reportDate: generationParams.reportDate,
+      customerName: generationParams.customerName || reportItem.name?.split('_')[0] || 'Unknown',
+      reportDate: generationParams.reportDate || new Date().toISOString(),
       employees: employeeData.employeeDetails || [],
-      selectedCategories: generationParams.selectedCategories,
+      selectedCategories: selectedCategories,
       documents: employeeData.documents || {},
       formats: reportFormats
     };
