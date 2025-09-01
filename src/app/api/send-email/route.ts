@@ -49,8 +49,17 @@ export const POST = auth(async (req) => {
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-    // Get report data
-    const { generationParams } = reportItem;
+    // Validate report item exists
+    if (!reportItem) {
+      console.error('Send email error: No report item provided');
+      return NextResponse.json(
+        { error: 'No report item provided' },
+        { status: 400 }
+      );
+    }
+
+    // Get report data with fallback
+    const generationParams = reportItem.generationParams || {};
     
     // Determine the format - handle both old and new format
     let reportFormats;
@@ -80,9 +89,11 @@ export const POST = auth(async (req) => {
 
     // Extract employee codes with fallback
     const selectedEmployees = generationParams.selectedEmployees || [];
+    console.log('Send email - selectedEmployees:', selectedEmployees.length);
+    
     const employeeCodes = selectedEmployees.map((emp: any) => 
-      typeof emp === 'string' ? emp : emp.employee_code
-    );
+      typeof emp === 'string' ? emp : (emp?.employee_code || '')
+    ).filter(code => code !== '');
     
     // Fetch employee details from BigQuery
     const selectedCategories = generationParams.selectedCategories || {};
@@ -90,7 +101,11 @@ export const POST = auth(async (req) => {
       cat => selectedCategories[cat] && selectedCategories[cat].length > 0
     );
     
-    const employeeData = await getEmployeeDetails(employeeCodes, selectedFields);
+    // Only fetch employee data if we have employee codes
+    let employeeData = { employeeDetails: [], documents: {} };
+    if (employeeCodes.length > 0) {
+      employeeData = await getEmployeeDetails(employeeCodes, selectedFields);
+    }
     
     // Prepare report data with fallbacks for missing fields
     const reportData = {
