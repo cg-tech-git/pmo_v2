@@ -120,8 +120,8 @@ export const POST = auth(async (req) => {
     // Import report generator dynamically
     const { generateReportBuffer } = await import('@/lib/report-generator');
     
-    // Generate the report as a buffer
-    const { buffer, mimeType, filename } = await generateReportBuffer(reportData, reportFormats);
+    // Generate the report as a buffer with original filename
+    const { buffer, mimeType, filename } = await generateReportBuffer(reportData, reportFormats, reportItem.name);
     
     // Report generated successfully
 

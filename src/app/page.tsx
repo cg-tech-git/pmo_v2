@@ -102,6 +102,31 @@ const generateFileName = (customerName: string, date: Date, extension: string): 
     return `${cleanCustomerName}_Report_${dateStr}_${timestamp}.${extension}`;
 };
 
+// Helper function to calculate estimated file size
+const calculateEstimatedFileSize = (fileType: string, employeeCount: number): string => {
+    // Base size in KB
+    let baseSizeKB = 50; // Base overhead for any file
+    
+    // Add size per employee based on file type
+    let sizePerEmployeeKB = 0;
+    if (fileType === 'PDF') {
+        sizePerEmployeeKB = 15; // PDF is more compact
+    } else if (fileType === 'Excel') {
+        sizePerEmployeeKB = 10; // Excel is efficient
+    } else if (fileType === 'ZIP') {
+        sizePerEmployeeKB = 20; // ZIP contains multiple formats
+    }
+    
+    const totalSizeKB = baseSizeKB + (employeeCount * sizePerEmployeeKB);
+    
+    if (totalSizeKB < 1024) {
+        return `${totalSizeKB} KB`;
+    } else {
+        const sizeMB = (totalSizeKB / 1024).toFixed(1);
+        return `${sizeMB} MB`;
+    }
+};
+
 // Modal data structure
 const modalData = {
     personalInfo: [
@@ -597,7 +622,7 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
                                 </div>
                             </Table.Cell>
                             <Table.Cell className="whitespace-nowrap text-xs">
-                                {item.fileType === '.pdf' ? (
+                                {item.fileType === 'PDF' || item.fileType === '.pdf' ? (
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 512 512">
                                         <path fill="#d84200" d="M128.06,22.6L23.18,127.48C10.2,140.46,2.91,158.07,2.91,176.43v1.8c0-26.17,21.22-47.39,47.39-47.39h81.12V49.72c0-26.17,21.22-47.39,47.39-47.39h-1.8C158.65,2.32,141.04,9.62,128.06,22.6z"></path>
                                         <path fill="#ebf2ff" d="M2.91,176.43v1.8c0-26.17,21.22-47.39,47.39-47.39h81.12V49.72c0-26.17,21.22-47.39,47.39-47.39h197.75v510.8H2.91V176.43z"></path>
@@ -613,7 +638,7 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
                                         </g>
                                         <polygon fill="#b73204" points="376.56 252.25 511.5 311.17 376.56 311.17"></polygon>
                                     </svg>
-                                ) : item.fileType === '.xlsx' ? (
+                                ) : item.fileType === 'Excel' || item.fileType === '.xlsx' ? (
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 512 512">
                                         <polygon fill="#096635" points="374.66 257 509.61 315.92 374.66 315.92"></polygon>
                                         <path fill="#19bf70" d="M126.35,21.26L21.53,126.09C8.55,139.06,1.26,156.66,1.26,175.01v1.8c0-26.16,21.21-47.37,47.37-47.37h81.08V48.37C129.7,22.21,150.91,1,177.07,1h-1.8C156.92,1,139.33,8.29,126.35,21.26z"></path>
@@ -637,7 +662,7 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
                                             <path fill="#19bf70" d="M216.98,289.54l-12.78-25.55c-5.24-9.84-8.59-17.17-12.57-25.34h-0.42c-2.93,8.17-6.49,15.5-10.89,25.34l-11.73,25.55h-36.44L173,218.12l-39.37-69.74h36.65l12.36,25.76c4.19,8.59,7.33,15.5,10.68,23.46h0.42c3.35-9.01,6.07-15.29,9.63-23.46l11.94-25.76h36.44l-39.79,68.9l41.89,72.26H216.98z"></path>
                                         </g>
                                     </svg>
-                                ) : item.fileType === '.zip' ? (
+                                ) : item.fileType === 'ZIP' || item.fileType === '.zip' ? (
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 512 512">
                                         <polygon fill="#282d35" points="375.58 252.7 510.52 311.62 375.58 311.62"></polygon>
                                         <path fill="#373e49" d="M126.04,22.26L21.57,126.73c-12.93,12.93-20.2,30.47-20.2,48.76v1.79c0-26.07,21.14-47.21,47.21-47.21h80.8v-80.8c0-26.07,21.14-47.21,47.21-47.21h-1.79C156.51,2.06,138.98,9.32,126.04,22.26z"></path>
@@ -1252,7 +1277,7 @@ export default function HomePage() {
                                     body: JSON.stringify({
                                         reportName,
                                         fileType,
-                                        fileSize: '0 MB', // Size calculation would need to be implemented
+                                        fileSize: calculateEstimatedFileSize(fileType, selectedEmployees.length),
                                         customerName: customerName.trim() || 'Unknown',
                                         reportDate: selectedDate ? selectedDate.toDate(getLocalTimeZone()).toISOString() : new Date().toISOString(),
                                         employeeCount: selectedEmployees.length,
@@ -1496,11 +1521,24 @@ export default function HomePage() {
             const result = await response.json();
             
             if (result.success) {
-                // Import report generator dynamically
-                const { generateReport } = await import('@/lib/report-generator');
+                // Import report generator and file saver
+                const { generatePDFReport, generateExcelReport, generateZIPReport } = await import('@/lib/report-generator');
+                const { saveAs } = await import('file-saver');
                 
-                // Generate and download the report
-                await generateReport(result.data, reportFormats);
+                // Generate the report with the original filename
+                const originalName = reportItem.name;
+                const nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.'));
+                
+                if (reportFormats.zip) {
+                    const zipBlob = await generateZIPReport(result.data);
+                    saveAs(zipBlob, originalName.endsWith('.zip') ? originalName : `${nameWithoutExt}.zip`);
+                } else if (reportFormats.pdf) {
+                    const pdfBlob = await generatePDFReport(result.data);
+                    saveAs(pdfBlob, originalName.endsWith('.pdf') ? originalName : `${nameWithoutExt}.pdf`);
+                } else if (reportFormats.xlsx) {
+                    const excelBlob = await generateExcelReport(result.data);
+                    saveAs(excelBlob, originalName);
+                }
                 
                 // Increment download counter
                 setTotalDownloads(prev => prev + 1);

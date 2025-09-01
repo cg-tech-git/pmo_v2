@@ -575,9 +575,17 @@ export async function generateReport(
 // Generate report as buffer for email attachment
 export async function generateReportBuffer(
   data: ReportData,
-  formats: { pdf?: boolean; xlsx?: boolean; zip?: boolean }
+  formats: { pdf?: boolean; xlsx?: boolean; zip?: boolean },
+  originalFilename?: string
 ): Promise<{ buffer: Buffer; mimeType: string; filename: string }> {
-  const fileName = `${data.customerName}_${data.reportDate}`;
+  // Use original filename if provided, otherwise generate default
+  let fileName: string;
+  if (originalFilename) {
+    const lastDotIndex = originalFilename.lastIndexOf('.');
+    fileName = lastDotIndex > 0 ? originalFilename.substring(0, lastDotIndex) : originalFilename;
+  } else {
+    fileName = `${data.customerName}_${data.reportDate}`;
+  }
   
   if (formats.zip) {
     const zipBlob = await generateZIPReport(data);
