@@ -1200,68 +1200,7 @@ export default function HomePage() {
                     return fileName;
                 };
                 
-                // Create a report for each selected format
-                const createdFileNames: string[] = [];
-                const newReports: ReportItem[] = [];
-                
-                // Process each format and save to database
-                for (const format of selectedFormats) {
-                    let extension = '.zip';
-                    let fileTypeForDB = 'ZIP';
-                    if (format.id === 'export-pdf') {
-                        extension = '.pdf';
-                        fileTypeForDB = 'PDF';
-                    } else if (format.id === 'export-xlsx') {
-                        extension = '.xlsx';
-                        fileTypeForDB = 'Excel';
-                    }
-                    
-                    const baseName = `${customerNameCleaned}_${dateStr}`;
-                    const fileName = getUniqueFileName(baseName, extension, createdFileNames);
-                    createdFileNames.push(fileName); // Add to the list of created files
-                    const fileSize = `${(Math.random() * 2 + 0.5).toFixed(1)} MB`;
-                    
-                    const generationParams = {
-                        customerName: customerName.trim(),
-                        reportDate: dateStr,
-                        selectedEmployees: [...selectedEmployees],
-                        selectedCategories: JSON.parse(JSON.stringify(selectedCategories)),
-                        reportFormat: format.id
-                    };
-                    
-                    try {
-                        // Save to database
-                        const saveResponse = await fetch('/api/reports', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                reportName: fileName,
-                                fileType: fileTypeForDB,
-                                fileSize: fileSize,
-                                customerName: customerName.trim(),
-                                reportDate: jsDate.toISOString(), // Use ISO format for date
-                                employeeCount: selectedEmployees.length,
-                                generationParams: generationParams
-                            })
-                        });
-                        
-                        if (!saveResponse.ok) {
-                            console.error('Failed to save report to database');
-                        }
-                        
-                        newReports.push({
-                            name: fileName,
-                            fileType: fileTypeForDB,
-                            size: fileSize,
-                            uploadedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                            updatedAt: jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                            uploadedBy: session?.user?.email || "Unknown User",
-                            generationParams: generationParams
-                        });
-                    } catch (error) {
-                        console.error('Error saving report:', error);
-                    }
-                }
+                // Reports will be saved after generation in the response handler below
                 
                 // Call API to generate report
                 try {
@@ -1318,7 +1257,7 @@ export default function HomePage() {
                                         reportDate: selectedDate ? selectedDate.toDate(getLocalTimeZone()).toISOString() : new Date().toISOString(),
                                         employeeCount: selectedEmployees.length,
                                         generationParams: {
-                                            selectedCategories: selectedCategoriesForAPI,
+                                            selectedCategories: selectedCategories,
                                             formats: selectedFormats.map(f => f.id),
                                         },
                                     }),

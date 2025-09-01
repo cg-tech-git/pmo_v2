@@ -108,6 +108,8 @@ export async function POST(request: NextRequest) {
       cloud_storage_url: null, // To be implemented when we add cloud storage
     };
     
+    console.log('POST /api/reports - Row to insert:', JSON.stringify(row, null, 2));
+    
     await bigquery
       .dataset(datasetId)
       .table(tableId)
@@ -131,13 +133,13 @@ export async function POST(request: NextRequest) {
     // Log specific BigQuery errors if available
     if (error.errors && Array.isArray(error.errors)) {
       error.errors.forEach((err: any, index: number) => {
-        console.error(`BigQuery Error ${index + 1}:`, {
-          reason: err.reason,
-          message: err.message,
-          location: err.location,
-          debugInfo: err.debugInfo,
-        });
+        console.error(`BigQuery Error ${index + 1}:`, JSON.stringify(err, null, 2));
       });
+    }
+    
+    // Also log the insertErrors from response
+    if (error.response?.insertErrors) {
+      console.error('BigQuery Insert Errors:', JSON.stringify(error.response.insertErrors, null, 2));
     }
     
     return NextResponse.json(
