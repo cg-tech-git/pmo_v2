@@ -1529,6 +1529,16 @@ export default function HomePage() {
                 const originalName = reportItem.name;
                 const nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.'));
                 
+                // Check if at least one format is selected
+                if (!reportFormats.zip && !reportFormats.pdf && !reportFormats.xlsx) {
+                    // Default based on file extension
+                    const ext = originalName.split('.').pop()?.toLowerCase();
+                    if (ext === 'pdf') reportFormats.pdf = true;
+                    else if (ext === 'xlsx' || ext === 'excel') reportFormats.xlsx = true;
+                    else if (ext === 'zip') reportFormats.zip = true;
+                    else reportFormats.xlsx = true; // Default to Excel if unknown
+                }
+                
                 if (reportFormats.zip) {
                     const zipBlob = await generateZIPReport(result.data);
                     saveAs(zipBlob, originalName.endsWith('.zip') ? originalName : `${nameWithoutExt}.zip`);
@@ -1537,7 +1547,14 @@ export default function HomePage() {
                     saveAs(pdfBlob, originalName.endsWith('.pdf') ? originalName : `${nameWithoutExt}.pdf`);
                 } else if (reportFormats.xlsx) {
                     const excelBlob = await generateExcelReport(result.data);
-                    saveAs(excelBlob, originalName);
+                    // Ensure .xlsx extension for Excel files
+                    let excelFilename = originalName;
+                    if (originalName.endsWith('.excel')) {
+                        excelFilename = `${nameWithoutExt}.xlsx`;
+                    } else if (!originalName.endsWith('.xlsx')) {
+                        excelFilename = `${nameWithoutExt}.xlsx`;
+                    }
+                    saveAs(excelBlob, excelFilename);
                 }
                 
                 // Increment download counter
