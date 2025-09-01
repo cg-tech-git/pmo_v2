@@ -94,6 +94,14 @@ const fetchReports = async (): Promise<ReportItem[]> => {
     }
 };
 
+// Helper function to generate report filenames
+const generateFileName = (customerName: string, date: Date, extension: string): string => {
+    const cleanCustomerName = customerName.replace(/[^a-zA-Z0-9]/g, '_');
+    const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const timestamp = Date.now();
+    return `${cleanCustomerName}_Report_${dateStr}_${timestamp}.${extension}`;
+};
+
 // Modal data structure
 const modalData = {
     personalInfo: [
@@ -1277,6 +1285,37 @@ export default function HomePage() {
                         
                         // Generate the report client-side
                         await generateReport(result.data, reportFormats);
+                        
+                        // Save report metadata to database for each format
+                        for (const format of selectedFormats) {
+                            const fileType = format.id === 'export-pdf' ? 'PDF' : 
+                                           format.id === 'export-xlsx' ? 'Excel' : 'ZIP';
+                            
+                            const reportName = generateFileName(
+                                customerName || 'Report',
+                                selectedDate || new Date(),
+                                fileType.toLowerCase()
+                            );
+                            
+                            await fetch('/api/reports', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    reportName,
+                                    fileType,
+                                    fileSize: '0 MB', // Size calculation would need to be implemented
+                                    customerName: customerName || 'Unknown',
+                                    reportDate: selectedDate ? selectedDate.toString() : new Date().toISOString(),
+                                    employeeCount: selectedEmployees.length,
+                                    generationParams: {
+                                        selectedCategories: selectedCategoriesForAPI,
+                                        formats: selectedFormats.map(f => f.id),
+                                    },
+                                }),
+                            });
+                        }
                         
                         // Refresh reports from database to show the new ones
                         const updatedReports = await fetchReports();
