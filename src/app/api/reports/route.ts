@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       report_name: reportName,
       file_type: fileType,
       file_size: fileSize,
-      created_at: bigquery.timestamp(new Date()),
+      created_at: new Date().toISOString(),
       created_by_email: session.user?.email || 'unknown',
       created_by_name: session.user?.name || 'Unknown User',
       customer_name: customerName,
