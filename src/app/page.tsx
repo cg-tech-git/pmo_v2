@@ -694,7 +694,12 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
                                     <button
                                         aria-label="Download"
                                         className="p-1 rounded hover:bg-transparent focus:outline-none"
-                                        onClick={() => onDownloadReport(item)}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('Download button clicked for:', item.name);
+                                            onDownloadReport(item);
+                                        }}
                                     >
                                         <Download01 className="size-5 text-tertiary" />
                                     </button>
@@ -1455,10 +1460,22 @@ export default function HomePage() {
     };
 
     const downloadReport = async (reportItem: ReportItem) => {
+        console.log('downloadReport function called with:', reportItem);
+        
+        // Add immediate visual feedback
+        setToastMessage('Processing download request...');
+        setToastType('info');
+        setShowToast(true);
+        
         try {
-            setToastMessage('Regenerating and downloading report...');
-            setToastType('info');
-            setShowToast(true);
+            // Validate reportItem
+            if (!reportItem) {
+                throw new Error('No report item provided');
+            }
+            
+            if (!reportItem.name) {
+                throw new Error('Report has no filename');
+            }
 
             // Handle reports with missing generationParams
             let generationParams = reportItem.generationParams;
@@ -1472,6 +1489,11 @@ export default function HomePage() {
                     reportFormat: ''
                 };
             }
+            
+            // Update toast to show progress
+            setToastMessage('Regenerating and downloading report...');
+            setToastType('info');
+            setShowToast(true);
             
             // Determine the format - handle both old and new format
             let reportFormats;
@@ -1515,13 +1537,20 @@ export default function HomePage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(requestBody)
+            }).catch(err => {
+                console.error('Fetch error:', err);
+                throw new Error(`Network error: ${err.message}`);
             });
 
             if (!response.ok) {
-                throw new Error('Failed to generate report data');
+                const errorText = await response.text().catch(() => 'No error details');
+                throw new Error(`Server error (${response.status}): ${errorText}`);
             }
 
-            const result = await response.json();
+            const result = await response.json().catch(err => {
+                console.error('JSON parse error:', err);
+                throw new Error('Invalid response from server');
+            });
             
             if (result.success) {
                 // Import report generator and file saver
@@ -1542,12 +1571,19 @@ export default function HomePage() {
                     else reportFormats.xlsx = true; // Default to Excel if unknown
                 }
                 
+                // Generate and download based on format
+                let downloadSuccessful = false;
+                
                 if (reportFormats.zip) {
                     const zipBlob = await generateZIPReport(result.data);
-                    saveAs(zipBlob, originalName.endsWith('.zip') ? originalName : `${nameWithoutExt}.zip`);
+                    const filename = originalName.endsWith('.zip') ? originalName : `${nameWithoutExt}.zip`;
+                    saveAs(zipBlob, filename);
+                    downloadSuccessful = true;
                 } else if (reportFormats.pdf) {
                     const pdfBlob = await generatePDFReport(result.data);
-                    saveAs(pdfBlob, originalName.endsWith('.pdf') ? originalName : `${nameWithoutExt}.pdf`);
+                    const filename = originalName.endsWith('.pdf') ? originalName : `${nameWithoutExt}.pdf`;
+                    saveAs(pdfBlob, filename);
+                    downloadSuccessful = true;
                 } else if (reportFormats.xlsx) {
                     const excelBlob = await generateExcelReport(result.data);
                     // Ensure .xlsx extension for Excel files
@@ -1558,6 +1594,11 @@ export default function HomePage() {
                         excelFilename = `${nameWithoutExt}.xlsx`;
                     }
                     saveAs(excelBlob, excelFilename);
+                    downloadSuccessful = true;
+                }
+                
+                if (!downloadSuccessful) {
+                    throw new Error('No valid format for download');
                 }
                 
                 // Increment download counter
@@ -1568,12 +1609,28 @@ export default function HomePage() {
             } else {
                 throw new Error(result.error || 'Failed to generate report');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Download error:', error);
-            setToastMessage('Failed to download report. Please try again.');
+            
+            // Provide specific error message
+            let errorMessage = 'Failed to download report. ';
+            if (error.message.includes('Network error')) {
+                errorMessage += 'Please check your internet connection.';
+            } else if (error.message.includes('Server error')) {
+                errorMessage += error.message;
+            } else if (error.message.includes('No valid format')) {
+                errorMessage += 'Unable to determine file format.';
+            } else if (error.message) {
+                errorMessage += error.message;
+            } else {
+                errorMessage += 'Please try again.';
+            }
+            
+            setToastMessage(errorMessage);
             setToastType('error');
+            setShowToast(true);
         } finally {
-            setTimeout(() => setShowToast(false), 3000);
+            setTimeout(() => setShowToast(false), 5000);
         }
     };
 
