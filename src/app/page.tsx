@@ -25,6 +25,8 @@ import { Tag, TagGroup, TagList } from "@/components/base/tags/tags";
 import { PaginationButtonGroup } from "@/components/application/pagination/pagination";
 import { useSession } from "next-auth/react";
 import { EmailModal } from "@/components/application/modals/email-modal";
+import { saveAs } from "file-saver";
+import { generateReport, generatePDFReport, generateExcelReport, generateZIPReport } from "@/lib/report-generator";
 
 // Gmail Icon Component
 const GmailIcon = ({ className }: { className?: string }) => (
@@ -697,7 +699,6 @@ const ReportsHistoryTable = ({ reportHistory, onDeleteReport, onDownloadReport, 
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            console.log('Download button clicked for:', item.name);
                                             onDownloadReport(item);
                                         }}
                                     >
@@ -1255,9 +1256,6 @@ export default function HomePage() {
                     const result = await response.json();
                     
                     if (result.success) {
-                        // Import report generator dynamically to avoid SSR issues
-                        const { generateReport } = await import('@/lib/report-generator');
-                        
                         // Generate the report client-side
                         await generateReport(result.data, reportFormats);
                         
@@ -1460,8 +1458,6 @@ export default function HomePage() {
     };
 
     const downloadReport = async (reportItem: ReportItem) => {
-        console.log('downloadReport function called with:', reportItem);
-        
         // Add immediate visual feedback
         setToastMessage('Processing download request...');
         setToastType('info');
@@ -1553,10 +1549,6 @@ export default function HomePage() {
             });
             
             if (result.success) {
-                // Import report generator and file saver
-                const { generatePDFReport, generateExcelReport, generateZIPReport } = await import('@/lib/report-generator');
-                const { saveAs } = await import('file-saver');
-                
                 // Generate the report with the original filename
                 const originalName = reportItem.name;
                 const nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.'));
